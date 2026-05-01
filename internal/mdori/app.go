@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path"
 	"path/filepath"
 	"strings"
 	"syscall"
@@ -26,6 +27,8 @@ type config struct {
 
 type app struct {
 	sourcePath string
+	rootDir    string
+	root       *os.Root
 	renderer   *renderer
 	reloader   *reloader
 }
@@ -60,9 +63,28 @@ func Run(parent context.Context, args []string, stdout, stderr io.Writer) error 
 	}
 	defer reloader.Close()
 
+	rootDir, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("get working directory: %w", err)
+	}
+	rootDir, err = filepath.Abs(rootDir)
+	if err != nil {
+		return fmt.Errorf("resolve working directory: %w", err)
+	}
+	if !pathWithinRoot(rootDir, cfg.path) {
+		return fmt.Errorf("markdown file %q is outside serving root %q", cfg.path, rootDir)
+	}
+	root, err := os.OpenRoot(rootDir)
+	if err != nil {
+		return fmt.Errorf("open serving root: %w", err)
+	}
+	defer root.Close()
+
 	server := &http.Server{
 		Handler: (&app{
 			sourcePath: cfg.path,
+			rootDir:    rootDir,
+			root:       root,
 			renderer:   newRenderer(),
 			reloader:   reloader,
 		}).routes(),
@@ -83,7 +105,7 @@ func Run(parent context.Context, args []string, stdout, stderr io.Writer) error 
 	fmt.Fprintf(stdout, "Serving at %s\n", url)
 
 	if cfg.openBrowser {
-		if err := openBrowser(url); err != nil {
+		if err := openBrowser(url + rootRelativeURLPath(rootDir, cfg.path)); err != nil {
 			fmt.Fprintf(stderr, "mdori: could not open browser automatically: %v\n", err)
 		}
 	}
@@ -157,12 +179,25 @@ func (a *app) routes() http.Handler {
 }
 
 func (a *app) serveDocument(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path != "/" {
+	if r.URL.Path == "/events" {
+		a.serveEvents(w, r)
+		return
+	}
+
+	filePath, err := a.resolveRequestPath(r.URL.Path)
+	if err != nil {
 		http.NotFound(w, r)
 		return
 	}
 
-	source, err := os.ReadFile(a.sourcePath)
+	if !isMarkdownPath(filePath) {
+		if err := a.serveStaticFile(w, r, filePath); err != nil {
+			http.NotFound(w, r)
+		}
+		return
+	}
+
+	source, err := a.readMarkdownFile(filePath)
 	if err != nil {
 		http.Error(w, "failed to read markdown file", http.StatusInternalServerError)
 		return
@@ -174,7 +209,7 @@ func (a *app) serveDocument(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	page, err := renderPage(pageTitle(a.sourcePath), rendered)
+	page, err := renderPage(pageTitle(filePath), rendered)
 	if err != nil {
 		http.Error(w, "failed to render page", http.StatusInternalServerError)
 		return
@@ -182,6 +217,133 @@ func (a *app) serveDocument(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	_, _ = w.Write(page)
+}
+
+func (a *app) readMarkdownFile(filePath string) ([]byte, error) {
+	rootDir := a.rootDir
+	if rootDir == "" {
+		rootDir = filepath.Dir(a.sourcePath)
+	}
+
+	file, err := a.openFileWithinRoot(rootDir, filePath)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	info, err := file.Stat()
+	if err != nil || info.IsDir() {
+		return nil, errors.New("invalid path")
+	}
+
+	return io.ReadAll(file)
+}
+
+func (a *app) serveStaticFile(w http.ResponseWriter, r *http.Request, filePath string) error {
+	rootDir := a.rootDir
+	if rootDir == "" {
+		rootDir = filepath.Dir(a.sourcePath)
+	}
+
+	file, err := a.openFileWithinRoot(rootDir, filePath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	info, err := file.Stat()
+	if err != nil || info.IsDir() {
+		return errors.New("invalid path")
+	}
+
+	http.ServeContent(w, r, info.Name(), info.ModTime(), file)
+	return nil
+}
+
+func (a *app) openFileWithinRoot(rootDir, filePath string) (*os.File, error) {
+	rel, err := filepath.Rel(rootDir, filePath)
+	if err != nil || rel == "." || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+		return nil, errors.New("invalid path")
+	}
+
+	if a.root != nil {
+		return a.root.Open(rel)
+	}
+
+	root, err := os.OpenRoot(rootDir)
+	if err != nil {
+		return nil, err
+	}
+	defer root.Close()
+
+	return root.Open(rel)
+}
+
+func (a *app) resolveRequestPath(urlPath string) (string, error) {
+	if urlPath == "/" {
+		return "", errors.New("invalid path")
+	}
+
+	rootDir := a.rootDir
+	if rootDir == "" {
+		rootDir = filepath.Dir(a.sourcePath)
+	}
+
+	cleanPath := path.Clean("/" + urlPath)
+	relURLPath := strings.TrimPrefix(cleanPath, "/")
+	if relURLPath == "" || strings.HasPrefix(relURLPath, "../") {
+		return "", errors.New("invalid path")
+	}
+
+	relPath := filepath.FromSlash(relURLPath)
+	if filepath.IsAbs(relPath) {
+		return "", errors.New("invalid path")
+	}
+
+	filePath := filepath.Join(rootDir, relPath)
+	if !pathWithinRoot(rootDir, filePath) {
+		return "", errors.New("invalid path")
+	}
+
+	info, err := os.Stat(filePath)
+	if err != nil || info.IsDir() {
+		return "", errors.New("invalid path")
+	}
+
+	return filePath, nil
+}
+
+func rootRelativeURLPath(rootDir, filePath string) string {
+	rel, err := filepath.Rel(rootDir, filePath)
+	if err != nil || rel == "." || !pathWithinRoot(rootDir, filePath) {
+		return "/"
+	}
+
+	return "/" + path.Clean(filepath.ToSlash(rel))
+}
+
+func pathWithinRoot(rootDir, filePath string) bool {
+	resolvedRoot, err := filepath.EvalSymlinks(rootDir)
+	if err == nil {
+		rootDir = resolvedRoot
+	}
+
+	resolvedFile, err := filepath.EvalSymlinks(filePath)
+	if err == nil {
+		filePath = resolvedFile
+	}
+
+	rel, err := filepath.Rel(rootDir, filePath)
+	return err == nil && rel != "." && rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator))
+}
+
+func isMarkdownPath(path string) bool {
+	switch strings.ToLower(filepath.Ext(path)) {
+	case ".md", ".markdown":
+		return true
+	default:
+		return false
+	}
 }
 
 func (a *app) serveEvents(w http.ResponseWriter, r *http.Request) {

@@ -29,7 +29,7 @@ func TestServeDocumentReloadsSourceOnEachRequest(t *testing.T) {
 	server := httptest.NewServer(handler)
 	defer server.Close()
 
-	first := getBody(t, server.URL+"/")
+	first := getBody(t, server.URL+"/note.md")
 	if !strings.Contains(first, "<h1 id=\"first\">First</h1>") {
 		t.Fatalf("expected first response to contain initial heading, got %q", first)
 	}
@@ -38,9 +38,310 @@ func TestServeDocumentReloadsSourceOnEachRequest(t *testing.T) {
 		t.Fatalf("write updated markdown: %v", err)
 	}
 
-	second := getBody(t, server.URL+"/")
+	second := getBody(t, server.URL+"/note.md")
 	if !strings.Contains(second, "<h1 id=\"second\">Second</h1>") {
 		t.Fatalf("expected second response to contain updated heading, got %q", second)
+	}
+}
+
+func TestServeDocumentFollowsRelativeMarkdownLinks(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	docsDir := filepath.Join(dir, "docs", "nested")
+	if err := os.MkdirAll(docsDir, 0o755); err != nil {
+		t.Fatalf("make docs directory: %v", err)
+	}
+
+	indexPath := filepath.Join(docsDir, "index.md")
+	linkedPath := filepath.Join(docsDir, "hello.md")
+	readmePath := filepath.Join(dir, "README.md")
+
+	if err := os.WriteFile(indexPath, []byte("[Local](./hello.md)\n\n[Parent](../../../README.md)\n\n[Root](/README.md)\n"), 0o644); err != nil {
+		t.Fatalf("write index markdown: %v", err)
+	}
+	if err := os.WriteFile(linkedPath, []byte("# Local Document\n\n![Relative image](./image.png)\n"), 0o644); err != nil {
+		t.Fatalf("write linked markdown: %v", err)
+	}
+	if err := os.WriteFile(readmePath, []byte("# Root Readme\n"), 0o644); err != nil {
+		t.Fatalf("write readme markdown: %v", err)
+	}
+
+	handler := (&app{
+		sourcePath: indexPath,
+		rootDir:    dir,
+		renderer:   newRenderer(),
+	}).routes()
+
+	server := httptest.NewServer(handler)
+	defer server.Close()
+
+	index := getBody(t, server.URL+"/docs/nested/index.md")
+	if !strings.Contains(index, `<a href="./hello.md">Local</a>`) {
+		t.Fatalf("expected index response to contain relative markdown link, got %q", index)
+	}
+	if !strings.Contains(index, `<a href="../../../README.md">Parent</a>`) {
+		t.Fatalf("expected index response to contain parent markdown link, got %q", index)
+	}
+	if !strings.Contains(index, `<a href="/README.md">Root</a>`) {
+		t.Fatalf("expected index response to contain root markdown link, got %q", index)
+	}
+
+	linked := getBody(t, server.URL+"/docs/nested/hello.md")
+	if !strings.Contains(linked, `<h1 id="local-document">Local Document</h1>`) {
+		t.Fatalf("expected linked markdown to render as HTML, got %q", linked)
+	}
+	if !strings.Contains(linked, `<img src="./image.png" alt="Relative image">`) {
+		t.Fatalf("expected linked markdown to preserve relative image path, got %q", linked)
+	}
+
+	readme := getBody(t, server.URL+"/README.md")
+	if !strings.Contains(readme, `<h1 id="root-readme">Root Readme</h1>`) {
+		t.Fatalf("expected root markdown link to render as HTML, got %q", readme)
+	}
+}
+
+func TestServeDocumentServesRelativeStaticFiles(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	path := filepath.Join(dir, "index.md")
+	imagePath := filepath.Join(dir, "image.png")
+
+	if err := os.WriteFile(path, []byte("![Relative image](./image.png)\n"), 0o644); err != nil {
+		t.Fatalf("write markdown: %v", err)
+	}
+	if err := os.WriteFile(imagePath, []byte("fake image"), 0o644); err != nil {
+		t.Fatalf("write image: %v", err)
+	}
+
+	handler := (&app{
+		sourcePath: path,
+		rootDir:    dir,
+		renderer:   newRenderer(),
+	}).routes()
+
+	server := httptest.NewServer(handler)
+	defer server.Close()
+
+	body := getBody(t, server.URL+"/index.md")
+	if !strings.Contains(body, `<img src="./image.png" alt="Relative image">`) {
+		t.Fatalf("expected rendered document to contain relative image path, got %q", body)
+	}
+
+	resp, err := http.Get(server.URL + "/image.png")
+	if err != nil {
+		t.Fatalf("get relative image: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected image response status 200, got %d", resp.StatusCode)
+	}
+
+	image, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatalf("read image response: %v", err)
+	}
+	if string(image) != "fake image" {
+		t.Fatalf("expected image body, got %q", image)
+	}
+}
+
+func TestServeDocumentDoesNotRenderSourceAtRoot(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	path := filepath.Join(dir, "index.md")
+	if err := os.WriteFile(path, []byte("# Index\n"), 0o644); err != nil {
+		t.Fatalf("write markdown: %v", err)
+	}
+
+	handler := (&app{
+		sourcePath: path,
+		rootDir:    dir,
+		renderer:   newRenderer(),
+	}).routes()
+
+	req := httptest.NewRequest(http.MethodGet, "http://example.com/", nil)
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("expected root response status 404, got %d with body %q", rec.Code, rec.Body.String())
+	}
+}
+
+func TestRootRelativeURLPath(t *testing.T) {
+	t.Parallel()
+
+	got := rootRelativeURLPath(filepath.Join("repo"), filepath.Join("repo", "internal", "mdori", "testdata", "example.md"))
+	want := "/internal/mdori/testdata/example.md"
+	if got != want {
+		t.Fatalf("expected %q, got %q", want, got)
+	}
+}
+
+func TestServeDocumentDoesNotServeFilesOutsideRootDirectory(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	rootDir := filepath.Join(dir, "root")
+	if err := os.Mkdir(rootDir, 0o755); err != nil {
+		t.Fatalf("make source directory: %v", err)
+	}
+
+	path := filepath.Join(rootDir, "index.md")
+	if err := os.WriteFile(path, []byte("# Index\n"), 0o644); err != nil {
+		t.Fatalf("write markdown: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "secret.txt"), []byte("secret"), 0o644); err != nil {
+		t.Fatalf("write secret: %v", err)
+	}
+
+	handler := (&app{
+		sourcePath: path,
+		rootDir:    rootDir,
+		renderer:   newRenderer(),
+	}).routes()
+
+	req := httptest.NewRequest(http.MethodGet, "http://example.com/%2e%2e/secret.txt", nil)
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("expected traversal response status 404, got %d with body %q", rec.Code, rec.Body.String())
+	}
+	if strings.Contains(rec.Body.String(), "secret") {
+		t.Fatalf("expected traversal response not to expose file body, got %q", rec.Body.String())
+	}
+}
+
+func TestServeDocumentDoesNotFollowSymlinksOutsideRootDirectory(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	rootDir := filepath.Join(dir, "root")
+	outsideDir := filepath.Join(dir, "outside")
+	if err := os.Mkdir(rootDir, 0o755); err != nil {
+		t.Fatalf("make root directory: %v", err)
+	}
+	if err := os.Mkdir(outsideDir, 0o755); err != nil {
+		t.Fatalf("make outside directory: %v", err)
+	}
+
+	path := filepath.Join(rootDir, "index.md")
+	if err := os.WriteFile(path, []byte("# Index\n"), 0o644); err != nil {
+		t.Fatalf("write markdown: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(outsideDir, "secret.txt"), []byte("secret"), 0o644); err != nil {
+		t.Fatalf("write secret: %v", err)
+	}
+	if err := os.Symlink(outsideDir, filepath.Join(rootDir, "outside-link")); err != nil {
+		t.Fatalf("make symlink: %v", err)
+	}
+
+	handler := (&app{
+		sourcePath: path,
+		rootDir:    rootDir,
+		renderer:   newRenderer(),
+	}).routes()
+
+	req := httptest.NewRequest(http.MethodGet, "http://example.com/outside-link/secret.txt", nil)
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("expected symlink escape response status 404, got %d with body %q", rec.Code, rec.Body.String())
+	}
+	if strings.Contains(rec.Body.String(), "secret") {
+		t.Fatalf("expected symlink escape response not to expose file body, got %q", rec.Body.String())
+	}
+}
+
+func TestServeDocumentDoesNotServeSymlinkedFileOutsideRootDirectory(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	rootDir := filepath.Join(dir, "root")
+	outsideDir := filepath.Join(dir, "outside")
+	if err := os.Mkdir(rootDir, 0o755); err != nil {
+		t.Fatalf("make root directory: %v", err)
+	}
+	if err := os.Mkdir(outsideDir, 0o755); err != nil {
+		t.Fatalf("make outside directory: %v", err)
+	}
+
+	path := filepath.Join(rootDir, "index.md")
+	if err := os.WriteFile(path, []byte("# Index\n"), 0o644); err != nil {
+		t.Fatalf("write markdown: %v", err)
+	}
+	secretPath := filepath.Join(outsideDir, "secret.txt")
+	if err := os.WriteFile(secretPath, []byte("secret"), 0o644); err != nil {
+		t.Fatalf("write secret: %v", err)
+	}
+	if err := os.Symlink(secretPath, filepath.Join(rootDir, "secret-link.txt")); err != nil {
+		t.Fatalf("make symlink: %v", err)
+	}
+
+	handler := (&app{
+		sourcePath: path,
+		rootDir:    rootDir,
+		renderer:   newRenderer(),
+	}).routes()
+
+	req := httptest.NewRequest(http.MethodGet, "http://example.com/secret-link.txt", nil)
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("expected symlink file response status 404, got %d with body %q", rec.Code, rec.Body.String())
+	}
+	if strings.Contains(rec.Body.String(), "secret") {
+		t.Fatalf("expected symlink file response not to expose file body, got %q", rec.Body.String())
+	}
+}
+
+func TestServeDocumentDoesNotRenderSymlinkedMarkdownOutsideRootDirectory(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	rootDir := filepath.Join(dir, "root")
+	outsideDir := filepath.Join(dir, "outside")
+	if err := os.Mkdir(rootDir, 0o755); err != nil {
+		t.Fatalf("make root directory: %v", err)
+	}
+	if err := os.Mkdir(outsideDir, 0o755); err != nil {
+		t.Fatalf("make outside directory: %v", err)
+	}
+
+	path := filepath.Join(rootDir, "index.md")
+	if err := os.WriteFile(path, []byte("# Index\n"), 0o644); err != nil {
+		t.Fatalf("write markdown: %v", err)
+	}
+	secretPath := filepath.Join(outsideDir, "secret.md")
+	if err := os.WriteFile(secretPath, []byte("# Secret\n"), 0o644); err != nil {
+		t.Fatalf("write secret markdown: %v", err)
+	}
+	if err := os.Symlink(secretPath, filepath.Join(rootDir, "secret-link.md")); err != nil {
+		t.Fatalf("make symlink: %v", err)
+	}
+
+	handler := (&app{
+		sourcePath: path,
+		rootDir:    rootDir,
+		renderer:   newRenderer(),
+	}).routes()
+
+	req := httptest.NewRequest(http.MethodGet, "http://example.com/secret-link.md", nil)
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("expected symlink markdown response status 404, got %d with body %q", rec.Code, rec.Body.String())
+	}
+	if strings.Contains(rec.Body.String(), "Secret") {
+		t.Fatalf("expected symlink markdown response not to expose file body, got %q", rec.Body.String())
 	}
 }
 
@@ -72,20 +373,71 @@ func TestParseArgsDefaultsAndFileResolution(t *testing.T) {
 }
 
 func TestRunReturnsWhenContextCancels(t *testing.T) {
-	t.Parallel()
-
 	dir := t.TempDir()
 	path := filepath.Join(dir, "README.md")
 	if err := os.WriteFile(path, []byte("# Hello\n"), 0o644); err != nil {
 		t.Fatalf("write markdown file: %v", err)
 	}
 
+	previousDir, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("get working directory: %v", err)
+	}
+	defer func() {
+		if err := os.Chdir(previousDir); err != nil {
+			t.Fatalf("restore working directory: %v", err)
+		}
+	}()
+
+	if err := os.Chdir(dir); err != nil {
+		t.Fatalf("change working directory: %v", err)
+	}
+
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
-	err := Run(ctx, []string{"--no-open", path}, io.Discard, io.Discard)
+	err = Run(ctx, []string{"--no-open", path}, io.Discard, io.Discard)
 	if err != nil {
 		t.Fatalf("expected clean shutdown on canceled context, got %v", err)
+	}
+}
+
+func TestRunRejectsMarkdownFileOutsideWorkingDirectory(t *testing.T) {
+	dir := t.TempDir()
+	rootDir := filepath.Join(dir, "root")
+	outsideDir := filepath.Join(dir, "outside")
+	if err := os.Mkdir(rootDir, 0o755); err != nil {
+		t.Fatalf("make root directory: %v", err)
+	}
+	if err := os.Mkdir(outsideDir, 0o755); err != nil {
+		t.Fatalf("make outside directory: %v", err)
+	}
+
+	path := filepath.Join(outsideDir, "README.md")
+	if err := os.WriteFile(path, []byte("# Outside\n"), 0o644); err != nil {
+		t.Fatalf("write markdown file: %v", err)
+	}
+
+	previousDir, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("get working directory: %v", err)
+	}
+	defer func() {
+		if err := os.Chdir(previousDir); err != nil {
+			t.Fatalf("restore working directory: %v", err)
+		}
+	}()
+
+	if err := os.Chdir(rootDir); err != nil {
+		t.Fatalf("change working directory: %v", err)
+	}
+
+	err = Run(context.Background(), []string{"--no-open", path}, io.Discard, io.Discard)
+	if err == nil {
+		t.Fatal("expected Run to reject source outside working directory")
+	}
+	if !strings.Contains(err.Error(), "outside serving root") {
+		t.Fatalf("expected outside serving root error, got %v", err)
 	}
 }
 

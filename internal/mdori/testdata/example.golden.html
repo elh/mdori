@@ -1,0 +1,382 @@
+<h1 id="github-flavored-markdown-example">GitHub-Flavored Markdown Example</h1>
+<h2 id="text-styling">Text styling</h2>
+<p><strong>Strong text</strong>, <strong>strong text with underscores</strong>, <em>emphasized text</em>,
+<em>emphasized text with underscores</em>, <em><strong>combined emphasis</strong></em>,
+<strong>strong text with <em>nested emphasis</em></strong>, <del>strikethrough text</del>, <code>inline code</code>,
+and escaped punctuation like *not emphasis*.</p>
+<p><sub>Subscript text</sub>, <sup>Superscript text</sup>, and
+<ins>underlined text</ins>.</p>
+<p>Color models in code spans: <code>#0969DA</code>, <code>rgb(9, 105, 218)</code>,
+and <code>hsl(212, 92%, 45%)</code>.</p>
+<h2 id="links-and-images">Links and Images</h2>
+<p>Autolinks: <a href="https://example.com">https://example.com</a>, <a href="http://www.example.org">www.example.org</a>, <a href="mailto:user@example.com">user@example.com</a>.</p>
+<p><a href="https://www.markdownguide.org/basic-syntax/#reference-style-links">Reference links</a> and <a href="https://www.markdownguide.org/basic-syntax/#links" title="alt text">inline links</a>.</p>
+<p>Relative links can point to <a href="./hello.md">a local document</a>, a <a href="../../../README.md">parent
+document</a>, or a <a href="/README.md">repository-root path</a>.</p>
+<p>Section links can point to <a href="#tables">the tables section</a> and
+<a href="#duplicate-heading">the duplicate heading</a>.</p>
+<p><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/57/Markdown-mark-purple.svg/250px-Markdown-mark-purple.svg.png" alt="Alt text for an image" title="Example image"></p>
+<p><a href="https://www.wikimedia.org"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/57/Markdown-mark-purple.svg/250px-Markdown-mark-purple.svg.png" alt="Linked image alt text"></a></p>
+<p><img src="./markdown_pink.png" alt="Relative image alt text"></p>
+<h2 id="headings">Headings</h2>
+<h1 id="h1">H1</h1>
+<h2 id="h2">H2</h2>
+<h3 id="h3">H3</h3>
+<h4 id="h4">H4</h4>
+<h5 id="h5">H5</h5>
+<h6 id="h6">H6</h6>
+<h3 id="duplicate-heading">Duplicate Heading</h3>
+<h3 id="duplicate-heading-1">Duplicate Heading</h3>
+<h3 id="punctuation-unicode-and--formatting--in-heading-ids-">Punctuation, Unicode, and <em>formatting</em> in Heading IDs: Θ!</h3>
+<h2 id="paragraphs-and-breaks">Paragraphs and Breaks</h2>
+<p>Paragraph text wraps across source lines
+without creating a hard line break.</p>
+<p>This line ends with two trailing spaces.<br>
+The next line should be separated by a hard break.</p>
+<p>This line ends with a backslash.<br>
+The next line should also be separated by a hard break.</p>
+<h2 id="horizontal-rules">Horizontal Rules</h2>
+<hr>
+<hr>
+<hr>
+<h2 id="blockquotes">Blockquotes</h2>
+<blockquote>
+<p>A blockquote can contain <strong>formatting</strong>.</p>
+<ul>
+<li>nested list item</li>
+<li>another item</li>
+</ul>
+<blockquote>
+<p>nested quote</p>
+</blockquote>
+</blockquote>
+<h2 id="lists">Lists</h2>
+<ol>
+<li>
+<p>First ordered item</p>
+</li>
+<li>
+<p>Second ordered item</p>
+<ol>
+<li>Nested ordered item</li>
+<li>Another nested item</li>
+</ol>
+</li>
+<li>
+<p>Ordered item starting at one hundred</p>
+</li>
+<li>
+<p>Next ordered item</p>
+</li>
+</ol>
+<ul>
+<li>Dash unordered item</li>
+</ul>
+<ul>
+<li>Asterisk unordered item</li>
+</ul>
+<ul>
+<li>Plus unordered item</li>
+</ul>
+<ul>
+<li>
+<p>Parent item</p>
+<ul>
+<li>Nested unordered item</li>
+<li>Another nested unordered item
+<ul>
+<li>Deep nested unordered item</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p><input checked="" disabled="" type="checkbox"> Completed task</p>
+</li>
+<li>
+<p><input disabled="" type="checkbox"> Incomplete task</p>
+</li>
+<li>
+<p><input checked="" disabled="" type="checkbox"> Capital checked task</p>
+</li>
+<li>
+<p><input disabled="" type="checkbox"> (Optional) escaped leading parenthesis</p>
+</li>
+</ul>
+<h2 id="tables">Tables</h2>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">Left</th>
+<th style="text-align:center">Center</th>
+<th style="text-align:right">Right</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">one</td>
+<td style="text-align:center">two</td>
+<td style="text-align:right">three</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>bold</strong></td>
+<td style="text-align:center"><code>code</code></td>
+<td style="text-align:right"><a href="https://example.com">link</a></td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>git status</code></td>
+<td>List all <em>new or modified</em> files</td>
+</tr>
+<tr>
+<td><code>git diff</code></td>
+<td>Show file differences that <strong>have not been</strong> staged</td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">Left-aligned</th>
+<th style="text-align:center">Center-aligned</th>
+<th style="text-align:right">Right-aligned</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">git status</td>
+<td style="text-align:center">git status</td>
+<td style="text-align:right">git status</td>
+</tr>
+<tr>
+<td style="text-align:left">git diff</td>
+<td style="text-align:center">git diff</td>
+<td style="text-align:right">git diff</td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>Escaped pipe</th>
+<th>Missing value</th>
+<th>Extra value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A | B</td>
+<td>present</td>
+<td>ignored?</td>
+</tr>
+<tr>
+<td>only one cell</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>one</td>
+<td>two</td>
+<td>three</td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Linux</th>
+<th>macOS</th>
+<th>Windows</th>
+<th>Notes</th>
+<th>Identifier</th>
+<th>Owner</th>
+<th>Status</th>
+<th>Last reviewed</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Very long configuration name that should make the table wider than a narrow viewport</td>
+<td>supported</td>
+<td>supported</td>
+<td>partial</td>
+<td>This cell contains a long unbroken token: abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789</td>
+<td>CFG-000000000000000000000000000001</td>
+<td>platform-team</td>
+<td>active</td>
+<td>2026-04-30</td>
+</tr>
+<tr>
+<td>Another wide row</td>
+<td>yes</td>
+<td>yes</td>
+<td>yes</td>
+<td>This row includes inline <code>code</code>, <strong>strong text</strong>, and <a href="https://example.com">a link</a>.</td>
+<td>CFG-000000000000000000000000000002</td>
+<td>docs-team</td>
+<td>pending</td>
+<td>2026-05-01</td>
+</tr>
+</tbody>
+</table>
+<p>This paragraph is immediately followed by table-looking text.</p>
+<table>
+<thead>
+<tr>
+<th>Adjacent header</th>
+<th>Adjacent value</th>
+</tr>
+</thead>
+</table>
+<h2 id="code">Code</h2>
+<p>Indented code:</p>
+<pre><code>package main
+
+func main() {}
+</code></pre>
+<p>Fenced code:</p>
+<pre><code class="language-go">package main
+
+import &quot;fmt&quot;
+
+func main() {
+	fmt.Println(&quot;hello&quot;)
+}
+</code></pre>
+<p>Fence without a language:</p>
+<pre><code>plain fenced code
+</code></pre>
+<p>Tilde fence:</p>
+<pre><code class="language-bash">printf '%s\n' &quot;hello&quot;
+</code></pre>
+<p>Fence with a longer info string:</p>
+<pre><code class="language-go">package main
+</code></pre>
+<p>Markdown delimiters inside code are not rendered:</p>
+<pre><code class="language-markdown"># Not a heading
+
+**Not bold**
+
+- [ ] Not a task
+</code></pre>
+<h2 id="diagrams">Diagrams</h2>
+<p>Mermaid:</p>
+<pre><code class="language-mermaid">flowchart TD
+	A[Start] --&gt; B{Ready?}
+	B --&gt;|yes| C[Render]
+</code></pre>
+<p>GeoJSON:</p>
+<pre><code class="language-geojson">{
+  &quot;type&quot;: &quot;Feature&quot;,
+  &quot;geometry&quot;: {
+    &quot;type&quot;: &quot;Point&quot;,
+    &quot;coordinates&quot;: [125.6, 10.1]
+  },
+  &quot;properties&quot;: {
+    &quot;name&quot;: &quot;Dinagat Islands&quot;
+  }
+}
+</code></pre>
+<p>TopoJSON:</p>
+<pre><code class="language-topojson">{
+  &quot;type&quot;: &quot;Topology&quot;,
+  &quot;objects&quot;: {
+    &quot;example&quot;: {
+      &quot;type&quot;: &quot;GeometryCollection&quot;,
+      &quot;geometries&quot;: [
+        {
+          &quot;type&quot;: &quot;Point&quot;,
+          &quot;properties&quot;: {&quot;name&quot;: &quot;example&quot;},
+          &quot;coordinates&quot;: [4000, 5000]
+        }
+      ]
+    }
+  },
+  &quot;arcs&quot;: []
+}
+</code></pre>
+<p>ASCII STL:</p>
+<pre><code class="language-stl">solid cube_corner
+  facet normal 0 0 0
+    outer loop
+      vertex 0 0 0
+      vertex 1 0 0
+      vertex 0 1 0
+    endloop
+  endfacet
+endsolid cube_corner
+</code></pre>
+<h2 id="mathematical-expressions">Mathematical Expressions</h2>
+<p>Inline math: $E = mc^2$.</p>
+<p>Block math:</p>
+<p>$$
+\int_0^1 x^2 dx = \frac{1}{3}
+$$</p>
+<h2 id="footnotes">Footnotes</h2>
+<p>Here is a sentence with a footnote.<sup id="fnref:1"><a href="#fn:1" class="footnote-ref" role="doc-noteref">1</a></sup></p>
+<p>Here is another reference to the same footnote.<sup id="fnref1:1"><a href="#fn:1" class="footnote-ref" role="doc-noteref">1</a></sup></p>
+<p>A second footnote has multiple source lines.<sup id="fnref:2"><a href="#fn:2" class="footnote-ref" role="doc-noteref">2</a></sup></p>
+<h2 id="github-flavored-extensions">GitHub-Flavored Extensions</h2>
+<p>Alerts:</p>
+<blockquote>
+<p>[!NOTE]
+Useful information that users should know, even when skimming content.</p>
+</blockquote>
+<blockquote>
+<p>[!TIP]
+Helpful advice for doing things better or more easily.</p>
+</blockquote>
+<blockquote>
+<p>[!IMPORTANT]
+Key information users need to know to achieve their goal.</p>
+</blockquote>
+<blockquote>
+<p>[!WARNING]
+Urgent information that needs immediate user attention to avoid problems.</p>
+</blockquote>
+<blockquote>
+<p>[!CAUTION]
+Advises about risks or negative outcomes of certain actions.</p>
+</blockquote>
+<p>Mentions and references: @octocat, @github/support, #123, GH-456, and
+owner/repo#789.</p>
+<p>Custom external references: JIRA-123, Zendesk-456.</p>
+<p>Emoji shortcodes: :sparkles: :shipit: :warning: :+1:</p>
+<h2 id="raw-html">Raw HTML</h2>
+<details>
+<summary>Expandable details</summary>
+<p>Details content can include <strong>Markdown formatting</strong>.</p>
+</details>
+<img alt="img tag" src="markdown_pink.png" />
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="markdown_pink.png" />
+  <img alt="Theme-aware example" src="markdown.png" />
+</picture>
+<p><a name="custom-anchor"></a></p>
+<p>HTML comments can hide content.</p>
+<!-- raw HTML omitted -->
+<!-- raw HTML omitted -->
+<p>Escaped raw HTML remains visible as text:</p>
+<p>&lt;details&gt;escaped details&lt;/details&gt;</p>
+<div class="footnotes" role="doc-endnotes">
+<hr>
+<ol>
+<li id="fn:1">
+<p>This is the first footnote body.&#160;<a href="#fnref:1" class="footnote-backref" role="doc-backlink">&#x21a9;&#xfe0e;</a>&#160;<a href="#fnref1:1" class="footnote-backref" role="doc-backlink">&#x21a9;&#xfe0e;</a></p>
+</li>
+<li id="fn:2">
+<p>This footnote has a first line.<br>
+This footnote has a second line.&#160;<a href="#fnref:2" class="footnote-backref" role="doc-backlink">&#x21a9;&#xfe0e;</a></p>
+</li>
+</ol>
+</div>

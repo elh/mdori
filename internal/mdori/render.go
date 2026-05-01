@@ -7,6 +7,8 @@ import (
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/extension"
 	"github.com/yuin/goldmark/parser"
+	gmrenderer "github.com/yuin/goldmark/renderer"
+	"github.com/yuin/goldmark/util"
 )
 
 type renderer struct {
@@ -16,8 +18,11 @@ type renderer struct {
 func newRenderer() *renderer {
 	return &renderer{
 		md: goldmark.New(
-			goldmark.WithExtensions(extension.GFM),
+			goldmark.WithExtensions(extension.GFM, extension.Footnote),
 			goldmark.WithParserOptions(parser.WithAutoHeadingID()),
+			goldmark.WithRendererOptions(gmrenderer.WithNodeRenderers(
+				util.Prioritized(safeHTMLRenderer{}, 400),
+			)),
 		),
 	}
 }
