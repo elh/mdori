@@ -17,14 +17,14 @@ import (
 	"time"
 )
 
-const usageText = "usage: mdori [-addr host:port] [-no-open] [-o output.html] [-preview] <markdown-file>\n"
+const usageText = "usage: mdori [-addr host:port] [-no-open] [-o output.html] [-once] <markdown-file>\n"
 
 type config struct {
 	addr        string
 	openBrowser bool
 	outputPath  string
 	path        string
-	preview     bool
+	once        bool
 }
 
 type app struct {
@@ -57,12 +57,12 @@ func Run(parent context.Context, args []string, stdout, stderr io.Writer) error 
 		return nil
 	}
 
-	if cfg.preview {
-		path, err := renderPreviewFile(cfg.path)
+	if cfg.once {
+		path, err := renderOnceFile(cfg.path)
 		if err != nil {
 			return err
 		}
-		fmt.Fprintf(stdout, "Preview written to %s\n", path)
+		fmt.Fprintf(stdout, "Standalone HTML written to %s\n", path)
 		if err := openBrowser(fileURL(path)); err != nil {
 			return fmt.Errorf("open browser: %w", err)
 		}
@@ -164,7 +164,7 @@ func parseArgs(args []string, stderr io.Writer) (config, error) {
 
 	var noOpen bool
 	fs.BoolVar(&noOpen, "no-open", false, "do not open the browser automatically")
-	fs.BoolVar(&cfg.preview, "preview", false, "write a temporary standalone HTML file, open it, and exit")
+	fs.BoolVar(&cfg.once, "once", false, "write a temporary standalone HTML file, open it, and exit")
 
 	if err := fs.Parse(args); err != nil {
 		return config{}, err
@@ -172,20 +172,20 @@ func parseArgs(args []string, stderr io.Writer) (config, error) {
 
 	cfg.openBrowser = !noOpen
 
-	if cfg.outputPath != "" && cfg.preview {
-		return config{}, errors.New("-o and -preview cannot be used together")
+	if cfg.outputPath != "" && cfg.once {
+		return config{}, errors.New("-o and -once cannot be used together")
 	}
 	if cfg.outputPath != "" && noOpen {
 		return config{}, errors.New("-no-open cannot be used with -o")
 	}
-	if cfg.preview && noOpen {
-		return config{}, errors.New("-no-open cannot be used with -preview")
+	if cfg.once && noOpen {
+		return config{}, errors.New("-no-open cannot be used with -once")
 	}
 	if cfg.outputPath != "" && cfg.addr != "127.0.0.1:0" {
 		return config{}, errors.New("-addr cannot be used with -o")
 	}
-	if cfg.preview && cfg.addr != "127.0.0.1:0" {
-		return config{}, errors.New("-addr cannot be used with -preview")
+	if cfg.once && cfg.addr != "127.0.0.1:0" {
+		return config{}, errors.New("-addr cannot be used with -once")
 	}
 
 	if fs.NArg() != 1 {

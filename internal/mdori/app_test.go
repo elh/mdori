@@ -635,11 +635,11 @@ func TestParseArgsUsageMatchesFlagOutput(t *testing.T) {
 
 	output := stderr.String()
 	for _, expected := range []string{
-		"usage: mdori [-addr host:port] [-no-open] [-o output.html] [-preview] <markdown-file>",
+		"usage: mdori [-addr host:port] [-no-open] [-o output.html] [-once] <markdown-file>",
 		"  -addr string",
 		"  -no-open",
 		"  -o string",
-		"  -preview",
+		"  -once",
 	} {
 		if !strings.Contains(output, expected) {
 			t.Fatalf("expected usage output to contain %q, got %q", expected, output)
@@ -756,21 +756,21 @@ func TestRunWritesStandaloneOutput(t *testing.T) {
 	}
 }
 
-func TestRenderPreviewFileWritesTemporaryStandaloneOutput(t *testing.T) {
+func TestRenderOnceFileWritesTemporaryStandaloneOutput(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "diagram.md")
 	if err := os.WriteFile(path, []byte("```mermaid\ngraph TD\n  A --> B\n```\n"), 0o644); err != nil {
 		t.Fatalf("write markdown file: %v", err)
 	}
 
-	previewPath, err := renderPreviewFile(path)
+	oncePath, err := renderOnceFile(path)
 	if err != nil {
-		t.Fatalf("render preview file: %v", err)
+		t.Fatalf("render once file: %v", err)
 	}
 
-	html, err := os.ReadFile(previewPath)
+	html, err := os.ReadFile(oncePath)
 	if err != nil {
-		t.Fatalf("read preview file: %v", err)
+		t.Fatalf("read once file: %v", err)
 	}
 	page := string(html)
 	for _, expected := range []string{
@@ -778,11 +778,11 @@ func TestRenderPreviewFileWritesTemporaryStandaloneOutput(t *testing.T) {
 		`mdoriBeautifulMermaid`,
 	} {
 		if !strings.Contains(page, expected) {
-			t.Fatalf("expected preview output to contain %q", expected)
+			t.Fatalf("expected once output to contain %q", expected)
 		}
 	}
 	if strings.Contains(page, `/_mdori/`) || strings.Contains(page, `new EventSource`) {
-		t.Fatalf("expected preview output to be standalone, got %q", page)
+		t.Fatalf("expected once output to be standalone, got %q", page)
 	}
 }
 

@@ -3,7 +3,7 @@
 [Home](index.html) · [GitHub](https://github.com/elh/mdori)
 
 This page is Markdown rendered by mdori. It collects the core features that are
-useful when previewing project notes, READMEs, technical docs, and exported
+useful when reading project notes, READMEs, technical docs, and exported
 standalone HTML.
 
 ## Text styling
@@ -37,13 +37,13 @@ Autolinks: https://example.com, www.example.org, user@example.com.
 
 | Command | Description |
 | --- | --- |
-| `mdori README.md` | Preview a Markdown file locally with live reload |
+| `mdori README.md` | View a Markdown file locally with live reload |
 | `mdori -o out.html README.md` | Render a standalone HTML file and exit |
-| `mdori -preview README.md` | Render a temporary standalone HTML preview |
+| `mdori -once README.md` | Render a temporary standalone HTML file, open it, and exit |
 
 | Feature | Linux | macOS | Windows | Notes |
 | --- | --- | --- | --- | --- |
-| Live preview | supported | supported | supported | Watches the source Markdown file and reloads the browser |
+| Live view | supported | supported | supported | Watches the source Markdown file and reloads the browser |
 | Standalone export | supported | supported | supported | Inlines the browser runtime needed by the rendered document |
 | Directory-aware links | supported | supported | supported | Applies to server mode, not standalone export |
 
@@ -95,7 +95,7 @@ Markdown inside a code fence stays literal:
 > Markdown files.
 
 > [!CAUTION]
-> The live preview server is intended for local use, not for hosting untrusted
+> The live server is intended for local use, not for hosting untrusted
 > inputs.
 
 ## Mermaid
@@ -104,7 +104,7 @@ Markdown inside a code fence stays literal:
 flowchart TD
 	A[Edit Markdown] --> B[mdori renders]
 	B --> C{Mode}
-	C -->|server| D[Live browser preview]
+	C -->|server| D[Live browser view]
 	C -->|standalone| E[Portable HTML file]
 ```
 

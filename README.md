@@ -1,6 +1,6 @@
 # mdori
 
-A fast, pretty, local Markdown previewer and HTML renderer.
+A fast, pretty, local Markdown viewer and HTML renderer.
 
 [Demo](https://elh.github.io/mdori/) ·
 [Examples](https://elh.github.io/mdori/examples.html) ·
@@ -15,20 +15,20 @@ go install github.com/elh/mdori/cmd/mdori@latest
 ```plaintext
 mdori path/to/file.md
 
-usage: mdori [-addr host:port] [-no-open] [-o output.html] [-preview] <markdown-file>
+usage: mdori [-addr host:port] [-no-open] [-o output.html] [-once] <markdown-file>
   -addr string
     	listen address (default "127.0.0.1:0")
   -no-open
     	do not open the browser automatically
   -o string
     	write standalone HTML to output path and exit
-  -preview
+  -once
     	write a temporary standalone HTML file, open it, and exit
 ```
 
 ## Features
 
-- Live browser preview with reload on save
+- Live browser view with reload on save
 - GitHub-flavored Markdown, footnotes, tables, task lists, and alerts
 - Syntax highlighting with Prism
 - Math expressions with KaTeX
@@ -45,7 +45,7 @@ This server-based mode is directory-aware: local `.md` links inside the current
 working directory are served through mdori and rendered as HTML, while relative
 images and assets are served from the same directory tree.
 
-`-o` renders a single standalone HTML file and exits. `-preview` renders a
+`-o` renders a single standalone HTML file and exits. `-once` renders a
 temporary standalone HTML file, opens it in the browser, and exits. These modes
 do not run a server, do not live reload, and do not render linked Markdown
 files. Relative `.md` links may open as raw Markdown or fail, root-relative
@@ -61,4 +61,4 @@ works offline.
 - Mermaid support uses beautiful-mermaid's subset, not full Mermaid.
 - GeoJSON/TopoJSON/STL diagrams are not supported.
 - Emoji shortcodes and repository-specific autolinks are not supported.
-- The live server is intended for local preview. Not hardened for untrusted inputs.
+- The live server is intended for local viewing. Not hardened for untrusted inputs.

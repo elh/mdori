@@ -22,7 +22,7 @@ func renderStandaloneFile(sourcePath, outputPath string) error {
 	return nil
 }
 
-func renderPreviewFile(sourcePath string) (string, error) {
+func renderOnceFile(sourcePath string) (string, error) {
 	page, err := renderStandalone(sourcePath)
 	if err != nil {
 		return "", err
@@ -30,12 +30,12 @@ func renderPreviewFile(sourcePath string) (string, error) {
 
 	file, err := os.CreateTemp("", "mdori-*.html")
 	if err != nil {
-		return "", fmt.Errorf("create preview file: %w", err)
+		return "", fmt.Errorf("create temporary standalone file: %w", err)
 	}
 	defer file.Close()
 
 	if _, err := file.Write(page); err != nil {
-		return "", fmt.Errorf("write preview file: %w", err)
+		return "", fmt.Errorf("write temporary standalone file: %w", err)
 	}
 	return file.Name(), nil
 }
