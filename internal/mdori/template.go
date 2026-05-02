@@ -25,7 +25,6 @@ var pageTmpl = template.Must(template.New("page").Parse(`<!doctype html>
       document.documentElement.dataset.theme = theme;
     })();
   </script>
-  <link rel="stylesheet" href="/_mdori/prism.css">
   <script defer src="/_mdori/prism.js"></script>
   <style>
     :root {
@@ -376,6 +375,7 @@ var pageTmpl = template.Must(template.New("page").Parse(`<!doctype html>
       margin: 2rem 0;
     }
 
+    /* Prism injects language-* and token classes into code blocks. */
     code[class*="language-"], pre[class*="language-"] {
       color: var(--color-syntax-text);
       background: transparent;
@@ -411,6 +411,10 @@ var pageTmpl = template.Must(template.New("page").Parse(`<!doctype html>
     .token.doctype,
     .token.cdata {
       color: var(--color-syntax-comment);
+    }
+
+    .token.namespace {
+      opacity: 0.7;
     }
 
     .token.punctuation {
@@ -456,9 +460,23 @@ var pageTmpl = template.Must(template.New("page").Parse(`<!doctype html>
       background: transparent;
     }
 
+    .token.important,
+    .token.regex,
+    .token.variable {
+      color: var(--color-syntax-operator);
+    }
+
     .token.bold,
     .token.important {
       font-weight: var(--weight-bold);
+    }
+
+    .token.italic {
+      font-style: italic;
+    }
+
+    .token.entity {
+      cursor: help;
     }
 
     @media (min-width: 92rem) {

@@ -16,4 +16,8 @@ usage: mdori [-addr host:port] [-no-open] <markdown-file>
     	do not open the browser automatically
 ```
 
-_WIP: Incomplete syntax support and styling, unstable._
+<br>
+<br>
+
+Unsupported: Mermaid, math expressions, GeoJSON/TopoJSON/STL diagrams, emoji
+shortcodes, and repository-specific autolinks.

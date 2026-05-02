@@ -6,13 +6,10 @@ import (
 	"net/http"
 )
 
-// Prism 1.30.0, vendored from prismjs.com/unpkg.
+// Prism 1.30.0 JavaScript, vendored from prismjs.com/unpkg.
 //
 // Keep this list intentionally small. Goldmark already emits language-* classes;
-// Prism only needs to style the common languages we bundle here.
-//
-//go:embed assets/prism.css
-var prismCSS []byte
+// Prism only needs the common languages we bundle here.
 
 //go:embed assets/prism-core.js
 var prismCoreJS []byte
@@ -52,11 +49,6 @@ var prismJS = bytes.Join([][]byte{
 	prismJSONJS,
 	prismMarkdownJS,
 }, []byte("\n"))
-
-func servePrismCSS(w http.ResponseWriter, _ *http.Request) {
-	w.Header().Set("Content-Type", "text/css; charset=utf-8")
-	_, _ = w.Write(prismCSS)
-}
 
 func servePrismJS(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "text/javascript; charset=utf-8")

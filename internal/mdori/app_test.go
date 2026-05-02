@@ -176,11 +176,13 @@ func TestServeEmbeddedPrismAssets(t *testing.T) {
 	defer server.Close()
 
 	page := getBody(t, server.URL+"/index.md")
-	if !strings.Contains(page, `<link rel="stylesheet" href="/_mdori/prism.css">`) {
-		t.Fatalf("expected rendered page to load prism css, got %q", page)
-	}
 	if !strings.Contains(page, `<script defer src="/_mdori/prism.js"></script>`) {
 		t.Fatalf("expected rendered page to load prism js, got %q", page)
+	}
+	for _, expected := range []string{`.token.keyword`, `pre code[class*="language-"]`} {
+		if !strings.Contains(page, expected) {
+			t.Fatalf("expected rendered page to include prism token css %q, got %q", expected, page)
+		}
 	}
 
 	resp, err := http.Get(server.URL + "/_mdori/prism.css")
@@ -188,19 +190,8 @@ func TestServeEmbeddedPrismAssets(t *testing.T) {
 		t.Fatalf("get prism css: %v", err)
 	}
 	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("expected prism css status 200, got %d", resp.StatusCode)
-	}
-	if contentType := resp.Header.Get("Content-Type"); !strings.HasPrefix(contentType, "text/css") {
-		t.Fatalf("expected prism css content type, got %q", contentType)
-	}
-	css, err := io.ReadAll(resp.Body)
-	if err != nil {
-		t.Fatalf("read prism css: %v", err)
-	}
-	if !strings.Contains(string(css), "code[class*=language-]") {
-		t.Fatalf("expected prism css body, got %q", css)
+	if resp.StatusCode != http.StatusNotFound {
+		t.Fatalf("expected prism css status 404, got %d", resp.StatusCode)
 	}
 
 	resp, err = http.Get(server.URL + "/_mdori/prism.js")
