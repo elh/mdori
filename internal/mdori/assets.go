@@ -14,34 +14,34 @@ import (
 // Keep this list intentionally small. Goldmark already emits language-* classes;
 // Prism only needs the common languages we bundle here.
 
-//go:embed assets/vendor/prism/prism-core.js
+//go:embed assets/third_party/prism/prism-core.js
 var prismCoreJS []byte
 
-//go:embed assets/vendor/prism/prism-markup.js
+//go:embed assets/third_party/prism/prism-markup.js
 var prismMarkupJS []byte
 
-//go:embed assets/vendor/prism/prism-css.js
+//go:embed assets/third_party/prism/prism-css.js
 var prismCSSJS []byte
 
-//go:embed assets/vendor/prism/prism-clike.js
+//go:embed assets/third_party/prism/prism-clike.js
 var prismCLikeJS []byte
 
-//go:embed assets/vendor/prism/prism-javascript.js
+//go:embed assets/third_party/prism/prism-javascript.js
 var prismJavaScriptJS []byte
 
-//go:embed assets/vendor/prism/prism-go.js
+//go:embed assets/third_party/prism/prism-go.js
 var prismGoJS []byte
 
-//go:embed assets/vendor/prism/prism-bash.js
+//go:embed assets/third_party/prism/prism-bash.js
 var prismBashJS []byte
 
-//go:embed assets/vendor/prism/prism-json.js
+//go:embed assets/third_party/prism/prism-json.js
 var prismJSONJS []byte
 
-//go:embed assets/vendor/prism/prism-markdown.js
+//go:embed assets/third_party/prism/prism-markdown.js
 var prismMarkdownJS []byte
 
-//go:embed assets/vendor/katex assets/vendor/beautiful-mermaid assets/mdori
+//go:embed assets/third_party/katex assets/third_party/beautiful-mermaid assets/mdori
 var embeddedAssets embed.FS
 
 var prismJS = bytes.Join([][]byte{
@@ -68,7 +68,7 @@ func serveEmbeddedAsset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data, err := fs.ReadFile(embeddedAssets, "assets/"+name)
+	data, err := fs.ReadFile(embeddedAssets, "assets/"+embeddedAssetName(name))
 	if err != nil {
 		http.NotFound(w, r)
 		return
@@ -85,4 +85,12 @@ func serveEmbeddedAsset(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	}
 	_, _ = w.Write(data)
+}
+
+func embeddedAssetName(name string) string {
+	name = strings.TrimPrefix(name, "/")
+	if strings.HasPrefix(name, "vendor/") {
+		return "third_party/" + strings.TrimPrefix(name, "vendor/")
+	}
+	return name
 }

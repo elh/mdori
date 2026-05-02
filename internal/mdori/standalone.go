@@ -63,7 +63,7 @@ func renderStandalone(sourcePath string) ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
-		katexJS, err := embeddedAsset("vendor/katex/katex.min.js")
+		katexJS, err := embeddedAsset("third_party/katex/katex.min.js")
 		if err != nil {
 			return nil, err
 		}
@@ -76,7 +76,7 @@ func renderStandalone(sourcePath string) ([]byte, error) {
 		out = strings.ReplaceAll(out, `<script defer src="/_mdori/mdori/math.js"></script>`, inlineScript(mathJS))
 	}
 	if rendered.NeedsMermaid {
-		beautifulMermaidJS, err := embeddedAsset("vendor/beautiful-mermaid/beautiful-mermaid.min.js")
+		beautifulMermaidJS, err := embeddedAsset("third_party/beautiful-mermaid/beautiful-mermaid.min.js")
 		if err != nil {
 			return nil, err
 		}
@@ -92,12 +92,12 @@ func renderStandalone(sourcePath string) ([]byte, error) {
 }
 
 func standaloneKatexCSS() ([]byte, error) {
-	rawCSS, err := embeddedAsset("vendor/katex/katex.min.css")
+	rawCSS, err := embeddedAsset("third_party/katex/katex.min.css")
 	if err != nil {
 		return nil, err
 	}
 	css := string(rawCSS)
-	fonts, err := fs.ReadDir(embeddedAssets, "assets/vendor/katex/fonts")
+	fonts, err := fs.ReadDir(embeddedAssets, "assets/third_party/katex/fonts")
 	if err != nil {
 		return nil, fmt.Errorf("read katex fonts: %w", err)
 	}
@@ -106,7 +106,7 @@ func standaloneKatexCSS() ([]byte, error) {
 		if font.IsDir() || !strings.HasSuffix(font.Name(), ".woff2") {
 			continue
 		}
-		data, err := embeddedAsset("vendor/katex/fonts/" + font.Name())
+		data, err := embeddedAsset("third_party/katex/fonts/" + font.Name())
 		if err != nil {
 			return nil, err
 		}
@@ -127,7 +127,7 @@ func inlineStyle(style []byte) string {
 }
 
 func embeddedAsset(name string) ([]byte, error) {
-	data, err := fs.ReadFile(embeddedAssets, "assets/"+name)
+	data, err := fs.ReadFile(embeddedAssets, "assets/"+embeddedAssetName(name))
 	if err != nil {
 		return nil, fmt.Errorf("read embedded asset %q: %w", name, err)
 	}
