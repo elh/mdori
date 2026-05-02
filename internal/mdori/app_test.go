@@ -635,9 +635,11 @@ func TestParseArgsUsageMatchesFlagOutput(t *testing.T) {
 
 	output := stderr.String()
 	for _, expected := range []string{
-		"usage: mdori [-addr host:port] [-no-open] <markdown-file>",
+		"usage: mdori [-addr host:port] [-no-open] [-o output.html] [-preview] <markdown-file>",
 		"  -addr string",
 		"  -no-open",
+		"  -o string",
+		"  -preview",
 	} {
 		if !strings.Contains(output, expected) {
 			t.Fatalf("expected usage output to contain %q, got %q", expected, output)
@@ -675,6 +677,112 @@ func TestRunReturnsWhenContextCancels(t *testing.T) {
 	err = Run(ctx, []string{"--no-open", path}, io.Discard, io.Discard)
 	if err != nil {
 		t.Fatalf("expected clean shutdown on canceled context, got %v", err)
+	}
+}
+
+func TestRunPrintsRenderedURLAndStopMessage(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "README.md")
+	if err := os.WriteFile(path, []byte("# Hello\n"), 0o644); err != nil {
+		t.Fatalf("write markdown file: %v", err)
+	}
+
+	previousDir, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("get working directory: %v", err)
+	}
+	defer func() {
+		if err := os.Chdir(previousDir); err != nil {
+			t.Fatalf("restore working directory: %v", err)
+		}
+	}()
+
+	if err := os.Chdir(dir); err != nil {
+		t.Fatalf("change working directory: %v", err)
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	var stdout bytes.Buffer
+	err = Run(ctx, []string{"--no-open", path}, &stdout, io.Discard)
+	if err != nil {
+		t.Fatalf("expected clean shutdown on canceled context, got %v", err)
+	}
+
+	output := stdout.String()
+	for _, expected := range []string{"Serving at http://", "/README.md", "Press Ctrl-C to stop."} {
+		if !strings.Contains(output, expected) {
+			t.Fatalf("expected stdout to contain %q, got %q", expected, output)
+		}
+	}
+}
+
+func TestRunWritesStandaloneOutput(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "math.md")
+	outputPath := filepath.Join(dir, "math.html")
+	if err := os.WriteFile(path, []byte("Inline $x$.\n"), 0o644); err != nil {
+		t.Fatalf("write markdown file: %v", err)
+	}
+
+	if err := Run(context.Background(), []string{"-o", outputPath, path}, io.Discard, io.Discard); err != nil {
+		t.Fatalf("run output mode: %v", err)
+	}
+
+	html, err := os.ReadFile(outputPath)
+	if err != nil {
+		t.Fatalf("read output file: %v", err)
+	}
+	page := string(html)
+	for _, expected := range []string{
+		`<span class="mdori-math mdori-math-inline">x</span>`,
+		`<style>`,
+		`data:font/woff2;base64,`,
+		`<script>`,
+		`katex.render`,
+	} {
+		if !strings.Contains(page, expected) {
+			t.Fatalf("expected standalone output to contain %q", expected)
+		}
+	}
+	for _, unexpected := range []string{
+		`/_mdori/`,
+		`new EventSource`,
+	} {
+		if strings.Contains(page, unexpected) {
+			t.Fatalf("did not expect standalone output to contain %q", unexpected)
+		}
+	}
+}
+
+func TestRenderPreviewFileWritesTemporaryStandaloneOutput(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "diagram.md")
+	if err := os.WriteFile(path, []byte("```mermaid\ngraph TD\n  A --> B\n```\n"), 0o644); err != nil {
+		t.Fatalf("write markdown file: %v", err)
+	}
+
+	previewPath, err := renderPreviewFile(path)
+	if err != nil {
+		t.Fatalf("render preview file: %v", err)
+	}
+
+	html, err := os.ReadFile(previewPath)
+	if err != nil {
+		t.Fatalf("read preview file: %v", err)
+	}
+	page := string(html)
+	for _, expected := range []string{
+		`<div class="mdori-mermaid"><pre><code>graph TD`,
+		`mdoriBeautifulMermaid`,
+	} {
+		if !strings.Contains(page, expected) {
+			t.Fatalf("expected preview output to contain %q", expected)
+		}
+	}
+	if strings.Contains(page, `/_mdori/`) || strings.Contains(page, `new EventSource`) {
+		t.Fatalf("expected preview output to be standalone, got %q", page)
 	}
 }
 

@@ -42,7 +42,7 @@ var pageTmpl = template.Must(template.New("page").Parse(`<!doctype html>
       --color-text: #262626;
       --color-muted: #525252;
       --color-border: #e5e5e5;
-      --color-code-bg: #f5f5f5;
+      --color-code-bg: #eeeeee;
       --color-control-bg: #fafafa;
       --color-control-text: #262626;
       --color-table-header-bg: #f5f5f5;
@@ -99,7 +99,7 @@ var pageTmpl = template.Must(template.New("page").Parse(`<!doctype html>
       --color-text: #e5e5e5;
       --color-muted: #a3a3a3;
       --color-border: #404040;
-      --color-code-bg: #1f1f1f;
+      --color-code-bg: #303030;
       --color-control-bg: #171717;
       --color-control-text: #e5e5e5;
       --color-table-header-bg: #171717;
@@ -129,7 +129,7 @@ var pageTmpl = template.Must(template.New("page").Parse(`<!doctype html>
         --color-text: #e5e5e5;
         --color-muted: #a3a3a3;
         --color-border: #404040;
-        --color-code-bg: #1f1f1f;
+        --color-code-bg: #303030;
         --color-control-bg: #171717;
         --color-control-text: #e5e5e5;
         --color-table-header-bg: #171717;
@@ -598,10 +598,12 @@ var pageTmpl = template.Must(template.New("page").Parse(`<!doctype html>
       });
     })();
 
+    {{ if .LiveReload }}
     const events = new EventSource("/events");
     events.addEventListener("reload", () => {
       window.location.reload();
     });
+    {{ end }}
   </script>
 </body>
 </html>
@@ -613,9 +615,14 @@ type pageData struct {
 	TOC          []tocItem
 	NeedsMath    bool
 	NeedsMermaid bool
+	LiveReload   bool
 }
 
 func renderPage(title string, rendered renderedDocument) ([]byte, error) {
+	return renderPageWithOptions(title, rendered, true)
+}
+
+func renderPageWithOptions(title string, rendered renderedDocument, liveReload bool) ([]byte, error) {
 	var buf bytes.Buffer
 	err := pageTmpl.Execute(&buf, pageData{
 		Title:        title,
@@ -623,6 +630,7 @@ func renderPage(title string, rendered renderedDocument) ([]byte, error) {
 		TOC:          rendered.TOC,
 		NeedsMath:    rendered.NeedsMath,
 		NeedsMermaid: rendered.NeedsMermaid,
+		LiveReload:   liveReload,
 	})
 	if err != nil {
 		return nil, err

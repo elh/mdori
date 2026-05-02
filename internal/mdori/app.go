@@ -17,12 +17,14 @@ import (
 	"time"
 )
 
-const usageText = "usage: mdori [-addr host:port] [-no-open] <markdown-file>\n"
+const usageText = "usage: mdori [-addr host:port] [-no-open] [-o output.html] [-preview] <markdown-file>\n"
 
 type config struct {
 	addr        string
 	openBrowser bool
+	outputPath  string
 	path        string
+	preview     bool
 }
 
 type app struct {
@@ -46,6 +48,25 @@ func Run(parent context.Context, args []string, stdout, stderr io.Writer) error 
 	cfg, err := parseArgs(args, stderr)
 	if err != nil {
 		return err
+	}
+
+	if cfg.outputPath != "" {
+		if err := renderStandaloneFile(cfg.path, cfg.outputPath); err != nil {
+			return err
+		}
+		return nil
+	}
+
+	if cfg.preview {
+		path, err := renderPreviewFile(cfg.path)
+		if err != nil {
+			return err
+		}
+		fmt.Fprintf(stdout, "Preview written to %s\n", path)
+		if err := openBrowser(fileURL(path)); err != nil {
+			return fmt.Errorf("open browser: %w", err)
+		}
+		return nil
 	}
 
 	listener, err := net.Listen("tcp", cfg.addr)
@@ -101,11 +122,12 @@ func Run(parent context.Context, args []string, stdout, stderr io.Writer) error 
 		serverErr <- nil
 	}()
 
-	url := "http://" + listener.Addr().String()
+	url := "http://" + listener.Addr().String() + rootRelativeURLPath(rootDir, cfg.path)
 	fmt.Fprintf(stdout, "Serving at %s\n", url)
+	fmt.Fprintln(stdout, "Press Ctrl-C to stop.")
 
 	if cfg.openBrowser {
-		if err := openBrowser(url + rootRelativeURLPath(rootDir, cfg.path)); err != nil {
+		if err := openBrowser(url); err != nil {
 			fmt.Fprintf(stderr, "mdori: could not open browser automatically: %v\n", err)
 		}
 	}
@@ -134,6 +156,7 @@ func parseArgs(args []string, stderr io.Writer) (config, error) {
 	fs := flag.NewFlagSet("mdori", flag.ContinueOnError)
 	fs.SetOutput(stderr)
 	fs.StringVar(&cfg.addr, "addr", cfg.addr, "listen address")
+	fs.StringVar(&cfg.outputPath, "o", "", "write standalone HTML to output path and exit")
 	fs.Usage = func() {
 		fmt.Fprint(stderr, usageText)
 		fs.PrintDefaults()
@@ -141,12 +164,29 @@ func parseArgs(args []string, stderr io.Writer) (config, error) {
 
 	var noOpen bool
 	fs.BoolVar(&noOpen, "no-open", false, "do not open the browser automatically")
+	fs.BoolVar(&cfg.preview, "preview", false, "write a temporary standalone HTML file, open it, and exit")
 
 	if err := fs.Parse(args); err != nil {
 		return config{}, err
 	}
 
 	cfg.openBrowser = !noOpen
+
+	if cfg.outputPath != "" && cfg.preview {
+		return config{}, errors.New("-o and -preview cannot be used together")
+	}
+	if cfg.outputPath != "" && noOpen {
+		return config{}, errors.New("-no-open cannot be used with -o")
+	}
+	if cfg.preview && noOpen {
+		return config{}, errors.New("-no-open cannot be used with -preview")
+	}
+	if cfg.outputPath != "" && cfg.addr != "127.0.0.1:0" {
+		return config{}, errors.New("-addr cannot be used with -o")
+	}
+	if cfg.preview && cfg.addr != "127.0.0.1:0" {
+		return config{}, errors.New("-addr cannot be used with -preview")
+	}
 
 	if fs.NArg() != 1 {
 		fs.Usage()
