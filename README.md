@@ -2,6 +2,10 @@
 
 A local Markdown previewer and HTML renderer.
 
+[This README rendered](https://elh.github.io/mdori/) ·
+[Examples](https://elh.github.io/mdori/examples.html) ·
+[GitHub](https://github.com/elh/mdori)
+
 ## Usage
 
 ```plaintext
