@@ -52,6 +52,10 @@ files. Relative `.md` links may open as raw Markdown or fail, root-relative
 links do not map to mdori's serving root, and relative images/assets only work
 when their paths are valid from the generated HTML file.
 
+Standalone exports inline the assets needed by that document. Plain Markdown
+stays small; math and Mermaid pages include their browser runtimes so the HTML
+works offline.
+
 ### Limitations
 
 - Mermaid support uses beautiful-mermaid's subset, not full Mermaid.
