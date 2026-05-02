@@ -232,9 +232,11 @@ func isSafeSrcset(value string) bool {
 
 var allowedHTMLTags = map[string]bool{
 	"a":       true,
+	"br":      true,
 	"details": true,
 	"img":     true,
 	"ins":     true,
+	"kbd":     true,
 	"picture": true,
 	"source":  true,
 	"sub":     true,
@@ -243,6 +245,7 @@ var allowedHTMLTags = map[string]bool{
 }
 
 var voidHTMLTags = map[string]bool{
+	"br":     true,
 	"img":    true,
 	"source": true,
 }
@@ -253,11 +256,13 @@ var booleanHTMLAttrs = map[string]bool{
 
 var allowedHTMLAttrs = map[string][]string{
 	"a":       {"href", "id", "name", "title"},
+	"br":      {},
 	"details": {"open"},
 	"img":     {"alt", "height", "loading", "src", "srcset", "title", "width"},
 	"ins":     {},
+	"kbd":     {},
 	"picture": {},
-	"source":  {"media", "sizes", "src", "srcset", "type"},
+	"source":  {"media", "sizes", "srcset", "type"},
 	"sub":     {},
 	"summary": {},
 	"sup":     {},

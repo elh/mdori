@@ -19,10 +19,15 @@ func newRenderer() *renderer {
 	return &renderer{
 		md: goldmark.New(
 			goldmark.WithExtensions(extension.GFM, extension.Footnote),
-			goldmark.WithParserOptions(parser.WithAutoHeadingID()),
+			goldmark.WithParserOptions(
+				parser.WithAutoHeadingID(),
+				parser.WithASTTransformers(util.Prioritized(githubTransformer{}, 400)),
+			),
 			goldmark.WithRendererOptions(gmrenderer.WithNodeRenderers(
+				util.Prioritized(alertRenderer{}, 400),
 				util.Prioritized(codeBlockRenderer{}, 400),
 				util.Prioritized(safeHTMLRenderer{}, 400),
+				util.Prioritized(tableRenderer{}, 400),
 			)),
 		),
 	}

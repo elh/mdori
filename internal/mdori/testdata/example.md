@@ -10,6 +10,9 @@ and escaped punctuation like \*not emphasis\*.
 <sub>Subscript text</sub>, <sup>Superscript text</sup>, and
 <ins>underlined text</ins>.
 
+<kbd>Command</kbd> + <kbd>K</kbd> keyboard input elements.<br>
+HTML line break.
+
 Color models in code spans: `#0969DA`, `rgb(9, 105, 218)`,
 and `hsl(212, 92%, 45%)`.
 
@@ -308,8 +311,6 @@ Details content can include **Markdown formatting**.
   <source media="(prefers-color-scheme: dark)" srcset="markdown_pink.png">
   <img alt="Theme-aware example" src="markdown.png">
 </picture>
-
-<a name="custom-anchor"></a>
 
 HTML comments can hide content.
 

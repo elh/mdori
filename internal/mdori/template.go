@@ -23,6 +23,11 @@ var pageTmpl = template.Must(template.New("page").Parse(`<!doctype html>
       --code-bg: #f6f8fa;
       --quote: #8c959f;
       --link: #0f5c83;
+      --alert-note: #0969da;
+      --alert-tip: #1a7f37;
+      --alert-important: #8250df;
+      --alert-warning: #9a6700;
+      --alert-caution: #cf222e;
     }
 
     * {
@@ -38,7 +43,7 @@ var pageTmpl = template.Must(template.New("page").Parse(`<!doctype html>
     }
 
     main {
-      width: min(100%, 52rem);
+      width: min(100%, 64rem);
       margin: 0 auto;
       padding: 3rem 1.5rem 4rem;
     }
@@ -57,7 +62,7 @@ var pageTmpl = template.Must(template.New("page").Parse(`<!doctype html>
       font-size: clamp(2.2rem, 5vw, 3rem);
     }
 
-    p, ul, ol, pre, table, blockquote {
+    p, ul, ol, pre, blockquote, .table-scroll {
       margin: 1rem 0;
     }
 
@@ -94,13 +99,80 @@ var pageTmpl = template.Must(template.New("page").Parse(`<!doctype html>
       padding-left: 1rem;
     }
 
-    table {
+    .markdown-alert {
+      border-left: 4px solid var(--alert-note);
+      margin: 1rem 0;
+      padding: 0.1rem 1rem;
+    }
+
+    .markdown-alert p {
+      margin: 0.75rem 0;
+    }
+
+    .markdown-alert-title {
+      color: var(--alert-note);
+      font-weight: 600;
+    }
+
+    .markdown-alert-tip {
+      border-left-color: var(--alert-tip);
+    }
+
+    .markdown-alert-tip .markdown-alert-title {
+      color: var(--alert-tip);
+    }
+
+    .markdown-alert-important {
+      border-left-color: var(--alert-important);
+    }
+
+    .markdown-alert-important .markdown-alert-title {
+      color: var(--alert-important);
+    }
+
+    .markdown-alert-warning {
+      border-left-color: var(--alert-warning);
+    }
+
+    .markdown-alert-warning .markdown-alert-title {
+      color: var(--alert-warning);
+    }
+
+    .markdown-alert-caution {
+      border-left-color: var(--alert-caution);
+    }
+
+    .markdown-alert-caution .markdown-alert-title {
+      color: var(--alert-caution);
+    }
+
+    kbd {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-bottom-width: 2px;
+      border-radius: 0.25rem;
+      box-shadow: inset 0 -1px 0 var(--border);
+      font-family: ui-monospace, "SFMono-Regular", "SF Mono", Menlo, Consolas, monospace;
+      font-size: 0.85em;
+      padding: 0.1rem 0.35rem;
+    }
+
+    .table-scroll {
+      overflow-x: auto;
       width: 100%;
+    }
+
+    table {
       border-collapse: collapse;
+      margin: 0;
+      min-width: 100%;
     }
 
     th, td {
       border: 1px solid var(--border);
+      min-width: 10rem;
+      max-width: 28rem;
+      overflow-wrap: anywhere;
       padding: 0.6rem 0.75rem;
       text-align: left;
       vertical-align: top;

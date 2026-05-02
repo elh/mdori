@@ -6,6 +6,8 @@
 and escaped punctuation like *not emphasis*.</p>
 <p><sub>Subscript text</sub>, <sup>Superscript text</sup>, and
 <ins>underlined text</ins>.</p>
+<p><kbd>Command</kbd> + <kbd>K</kbd> keyboard input elements.<br />
+HTML line break.</p>
 <p>Color models in code spans: <code>#0969DA</code>, <code>rgb(9, 105, 218)</code>,
 and <code>hsl(212, 92%, 45%)</code>.</p>
 <h2 id="links-and-images">Links and Images</h2>
@@ -104,6 +106,7 @@ The next line should also be separated by a hard break.</p>
 </li>
 </ul>
 <h2 id="tables">Tables</h2>
+<div class="table-scroll">
 <table>
 <thead>
 <tr>
@@ -125,6 +128,8 @@ The next line should also be separated by a hard break.</p>
 </tr>
 </tbody>
 </table>
+</div>
+<div class="table-scroll">
 <table>
 <thead>
 <tr>
@@ -143,6 +148,8 @@ The next line should also be separated by a hard break.</p>
 </tr>
 </tbody>
 </table>
+</div>
+<div class="table-scroll">
 <table>
 <thead>
 <tr>
@@ -164,6 +171,8 @@ The next line should also be separated by a hard break.</p>
 </tr>
 </tbody>
 </table>
+</div>
+<div class="table-scroll">
 <table>
 <thead>
 <tr>
@@ -190,6 +199,8 @@ The next line should also be separated by a hard break.</p>
 </tr>
 </tbody>
 </table>
+</div>
+<div class="table-scroll">
 <table>
 <thead>
 <tr>
@@ -229,7 +240,9 @@ The next line should also be separated by a hard break.</p>
 </tr>
 </tbody>
 </table>
+</div>
 <p>This paragraph is immediately followed by table-looking text.</p>
+<div class="table-scroll">
 <table>
 <thead>
 <tr>
@@ -238,6 +251,7 @@ The next line should also be separated by a hard break.</p>
 </tr>
 </thead>
 </table>
+</div>
 <h2 id="code">Code</h2>
 <p>Indented code:</p>
 <pre><code class="language-plaintext">package main
@@ -328,28 +342,28 @@ $$</p>
 <p>A second footnote has multiple source lines.<sup id="fnref:2"><a href="#fn:2" class="footnote-ref" role="doc-noteref">2</a></sup></p>
 <h2 id="github-flavored-extensions">GitHub-Flavored Extensions</h2>
 <p>Alerts:</p>
-<blockquote>
-<p>[!NOTE]
-Useful information that users should know, even when skimming content.</p>
-</blockquote>
-<blockquote>
-<p>[!TIP]
-Helpful advice for doing things better or more easily.</p>
-</blockquote>
-<blockquote>
-<p>[!IMPORTANT]
-Key information users need to know to achieve their goal.</p>
-</blockquote>
-<blockquote>
-<p>[!WARNING]
-Urgent information that needs immediate user attention to avoid problems.</p>
-</blockquote>
-<blockquote>
-<p>[!CAUTION]
-Advises about risks or negative outcomes of certain actions.</p>
-</blockquote>
-<p>Mentions and references: @octocat, @github/support, #123, GH-456, and
-owner/repo#789.</p>
+<div class="markdown-alert markdown-alert-note">
+<p class="markdown-alert-title">Note</p>
+<p>Useful information that users should know, even when skimming content.</p>
+</div>
+<div class="markdown-alert markdown-alert-tip">
+<p class="markdown-alert-title">Tip</p>
+<p>Helpful advice for doing things better or more easily.</p>
+</div>
+<div class="markdown-alert markdown-alert-important">
+<p class="markdown-alert-title">Important</p>
+<p>Key information users need to know to achieve their goal.</p>
+</div>
+<div class="markdown-alert markdown-alert-warning">
+<p class="markdown-alert-title">Warning</p>
+<p>Urgent information that needs immediate user attention to avoid problems.</p>
+</div>
+<div class="markdown-alert markdown-alert-caution">
+<p class="markdown-alert-title">Caution</p>
+<p>Advises about risks or negative outcomes of certain actions.</p>
+</div>
+<p>Mentions and references: <strong>@octocat</strong>, <strong>@github/support</strong>, <strong>#123</strong>, GH-456, and
+<strong>owner/repo#789</strong>.</p>
 <p>Custom external references: JIRA-123, Zendesk-456.</p>
 <p>Emoji shortcodes: :sparkles: :shipit: :warning: :+1:</p>
 <h2 id="raw-html">Raw HTML</h2>
@@ -362,7 +376,6 @@ owner/repo#789.</p>
   <source media="(prefers-color-scheme: dark)" srcset="markdown_pink.png" />
   <img alt="Theme-aware example" src="markdown.png" />
 </picture>
-<p><a name="custom-anchor"></a></p>
 <p>HTML comments can hide content.</p>
 <!-- raw HTML omitted -->
 <!-- raw HTML omitted -->

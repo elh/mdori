@@ -31,6 +31,24 @@ func TestRendererSupportsGitHubFlavoredMarkdown(t *testing.T) {
 	}
 }
 
+func TestRendererWrapsTablesForHorizontalScrolling(t *testing.T) {
+	t.Parallel()
+
+	source := []byte("| Column | Value |\n| --- | --- |\n| long | value |\n")
+	rendered, err := newRenderer().render(source)
+	if err != nil {
+		t.Fatalf("render markdown: %v", err)
+	}
+
+	html := string(rendered)
+	if !strings.Contains(html, `<div class="table-scroll">`+"\n<table>") {
+		t.Fatalf("expected table scroll wrapper, got %q", html)
+	}
+	if !strings.Contains(html, "</table>\n</div>") {
+		t.Fatalf("expected table scroll wrapper to close after table, got %q", html)
+	}
+}
+
 func TestRendererUsesPlaintextClassForCodeBlocksWithoutLanguage(t *testing.T) {
 	t.Parallel()
 
@@ -63,7 +81,7 @@ func TestRendererDoesNotAllowRawHTMLByDefault(t *testing.T) {
 func TestRendererAllowsSafeRawHTMLSubset(t *testing.T) {
 	t.Parallel()
 
-	source := []byte("<details open>\n<summary>More</summary>\n\n<sub>small</sub> <sup>high</sup> <ins>inserted</ins>\n</details>\n")
+	source := []byte("<details open>\n<summary>More</summary>\n\n<sub>small</sub> <sup>high</sup> <ins>inserted</ins><br>\nPress <kbd>Enter</kbd>.\n</details>\n")
 	rendered, err := newRenderer().render(source)
 	if err != nil {
 		t.Fatalf("render markdown: %v", err)
@@ -76,6 +94,8 @@ func TestRendererAllowsSafeRawHTMLSubset(t *testing.T) {
 		"<sub>small</sub>",
 		"<sup>high</sup>",
 		"<ins>inserted</ins>",
+		"<br />",
+		"<kbd>Enter</kbd>",
 		"</details>",
 	} {
 		if !strings.Contains(html, expected) {
@@ -107,6 +127,24 @@ func TestRendererDropsUnsafeRawHTMLAttributes(t *testing.T) {
 	}
 }
 
+func TestRendererDropsUnsupportedSourceSrcAttribute(t *testing.T) {
+	t.Parallel()
+
+	source := []byte(`<picture><source src="unused.png" srcset="dark.png"><img src="light.png" alt="theme"></picture>` + "\n")
+	rendered, err := newRenderer().render(source)
+	if err != nil {
+		t.Fatalf("render markdown: %v", err)
+	}
+
+	html := string(rendered)
+	if strings.Contains(html, `src="unused.png"`) {
+		t.Fatalf("expected unsupported source src attribute to be omitted, got %q", html)
+	}
+	if !strings.Contains(html, `<source srcset="dark.png" />`) {
+		t.Fatalf("expected source srcset attribute to remain, got %q", html)
+	}
+}
+
 func TestRendererDropsUnsafeHTMLCommentTerminators(t *testing.T) {
 	t.Parallel()
 
@@ -126,6 +164,63 @@ func TestRendererDropsUnsafeHTMLCommentTerminators(t *testing.T) {
 		}
 		if !strings.Contains(html, "<!-- raw HTML omitted -->") {
 			t.Fatalf("expected omitted raw HTML marker for %q, got %q", source, html)
+		}
+	}
+}
+
+func TestRendererSupportsGitHubAlerts(t *testing.T) {
+	t.Parallel()
+
+	source := []byte("> [!WARNING]\n> **Careful** with this.\n")
+	rendered, err := newRenderer().render(source)
+	if err != nil {
+		t.Fatalf("render markdown: %v", err)
+	}
+
+	html := string(rendered)
+	for _, expected := range []string{
+		`<div class="markdown-alert markdown-alert-warning">`,
+		`<p class="markdown-alert-title">Warning</p>`,
+		`<p><strong>Careful</strong> with this.</p>`,
+		`</div>`,
+	} {
+		if !strings.Contains(html, expected) {
+			t.Fatalf("expected %q in output, got %q", expected, html)
+		}
+	}
+	if strings.Contains(html, "[!WARNING]") {
+		t.Fatalf("expected alert marker to be omitted, got %q", html)
+	}
+}
+
+func TestRendererBoldsDisplayOnlyGitHubReferences(t *testing.T) {
+	t.Parallel()
+
+	source := []byte("Refs: @octocat, @github/support, #123, owner/repo#789, GH-456, JIRA-123, user@example.com, and `@code #1`.\n")
+	rendered, err := newRenderer().render(source)
+	if err != nil {
+		t.Fatalf("render markdown: %v", err)
+	}
+
+	html := string(rendered)
+	for _, expected := range []string{
+		`<strong>@octocat</strong>`,
+		`<strong>@github/support</strong>`,
+		`<strong>#123</strong>`,
+		`<strong>owner/repo#789</strong>`,
+	} {
+		if !strings.Contains(html, expected) {
+			t.Fatalf("expected %q in output, got %q", expected, html)
+		}
+	}
+	for _, unexpected := range []string{
+		`<strong>GH-456</strong>`,
+		`<strong>JIRA-123</strong>`,
+		`user<strong>@example</strong>`,
+		`<code><strong>@code</strong>`,
+	} {
+		if strings.Contains(html, unexpected) {
+			t.Fatalf("did not expect %q in output, got %q", unexpected, html)
 		}
 	}
 }
