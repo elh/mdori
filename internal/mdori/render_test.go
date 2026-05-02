@@ -2,6 +2,7 @@ package mdori
 
 import (
 	"bytes"
+	"html/template"
 	"os"
 	"path/filepath"
 	"strings"
@@ -17,7 +18,7 @@ func TestRendererSupportsGitHubFlavoredMarkdown(t *testing.T) {
 		t.Fatalf("render markdown: %v", err)
 	}
 
-	html := string(rendered)
+	html := string(rendered.HTML)
 	if !strings.Contains(html, "<h1 id=\"title\">Title</h1>") {
 		t.Fatalf("expected heading id in output, got %q", html)
 	}
@@ -40,12 +41,37 @@ func TestRendererWrapsTablesForHorizontalScrolling(t *testing.T) {
 		t.Fatalf("render markdown: %v", err)
 	}
 
-	html := string(rendered)
+	html := string(rendered.HTML)
 	if !strings.Contains(html, `<div class="table-scroll">`+"\n<table>") {
 		t.Fatalf("expected table scroll wrapper, got %q", html)
 	}
 	if !strings.Contains(html, "</table>\n</div>") {
 		t.Fatalf("expected table scroll wrapper to close after table, got %q", html)
+	}
+}
+
+func TestRendererBuildsTableOfContents(t *testing.T) {
+	t.Parallel()
+
+	source := []byte("# Title\n\n## First Section\n\n### Child Section\n\n#### Too Deep\n\n## Second Section\n")
+	rendered, err := newRenderer().render(source)
+	if err != nil {
+		t.Fatalf("render markdown: %v", err)
+	}
+
+	expected := []tocItem{
+		{Level: 1, ID: "title", Text: "Title"},
+		{Level: 2, ID: "first-section", Text: "First Section"},
+		{Level: 3, ID: "child-section", Text: "Child Section"},
+		{Level: 2, ID: "second-section", Text: "Second Section"},
+	}
+	if len(rendered.TOC) != len(expected) {
+		t.Fatalf("expected %d TOC items, got %#v", len(expected), rendered.TOC)
+	}
+	for i := range expected {
+		if rendered.TOC[i] != expected[i] {
+			t.Fatalf("expected TOC item %d to be %#v, got %#v", i, expected[i], rendered.TOC[i])
+		}
 	}
 }
 
@@ -58,9 +84,34 @@ func TestRendererUsesPlaintextClassForCodeBlocksWithoutLanguage(t *testing.T) {
 		t.Fatalf("render markdown: %v", err)
 	}
 
-	html := string(rendered)
+	html := string(rendered.HTML)
 	if count := strings.Count(html, `<code class="language-plaintext">`); count != 2 {
 		t.Fatalf("expected two plaintext code blocks, got %d in %q", count, html)
+	}
+}
+
+func TestRenderPageIncludesTableOfContents(t *testing.T) {
+	t.Parallel()
+
+	page, err := renderPage("doc", template.HTML(`<h2 id="first">First</h2>`), []tocItem{
+		{Level: 1, ID: "title", Text: "Title"},
+		{Level: 2, ID: "first", Text: "First"},
+		{Level: 3, ID: "child", Text: "Child"},
+	})
+	if err != nil {
+		t.Fatalf("render page: %v", err)
+	}
+
+	html := string(page)
+	for _, expected := range []string{
+		`<nav class="toc" aria-label="Table of contents">`,
+		`<a class="toc-link toc-level-1" href="#title">Title</a>`,
+		`<a class="toc-link toc-level-2" href="#first">First</a>`,
+		`<a class="toc-link toc-level-3" href="#child">Child</a>`,
+	} {
+		if !strings.Contains(html, expected) {
+			t.Fatalf("expected %q in output, got %q", expected, html)
+		}
 	}
 }
 
@@ -72,7 +123,7 @@ func TestRendererDoesNotAllowRawHTMLByDefault(t *testing.T) {
 		t.Fatalf("render markdown: %v", err)
 	}
 
-	html := string(rendered)
+	html := string(rendered.HTML)
 	if strings.Contains(html, "<script>") {
 		t.Fatalf("expected raw HTML to be omitted, got %q", html)
 	}
@@ -87,7 +138,7 @@ func TestRendererAllowsSafeRawHTMLSubset(t *testing.T) {
 		t.Fatalf("render markdown: %v", err)
 	}
 
-	html := string(rendered)
+	html := string(rendered.HTML)
 	for _, expected := range []string{
 		"<details open>",
 		"<summary>More</summary>",
@@ -113,7 +164,7 @@ func TestRendererDropsUnsafeRawHTMLAttributes(t *testing.T) {
 		t.Fatalf("render markdown: %v", err)
 	}
 
-	html := string(rendered)
+	html := string(rendered.HTML)
 	for _, unexpected := range []string{"javascript:", "data:text/html", "onclick", "onerror", "alert("} {
 		if strings.Contains(html, unexpected) {
 			t.Fatalf("expected unsafe attribute content %q to be omitted, got %q", unexpected, html)
@@ -136,7 +187,7 @@ func TestRendererDropsUnsupportedSourceSrcAttribute(t *testing.T) {
 		t.Fatalf("render markdown: %v", err)
 	}
 
-	html := string(rendered)
+	html := string(rendered.HTML)
 	if strings.Contains(html, `src="unused.png"`) {
 		t.Fatalf("expected unsupported source src attribute to be omitted, got %q", html)
 	}
@@ -158,7 +209,7 @@ func TestRendererDropsUnsafeHTMLCommentTerminators(t *testing.T) {
 			t.Fatalf("render markdown: %v", err)
 		}
 
-		html := string(rendered)
+		html := string(rendered.HTML)
 		if strings.Contains(html, "<script>") || strings.Contains(html, "alert(1)") || strings.Contains(html, "benign comment") {
 			t.Fatalf("expected raw HTML comment to be omitted for %q, got %q", source, html)
 		}
@@ -177,7 +228,7 @@ func TestRendererSupportsGitHubAlerts(t *testing.T) {
 		t.Fatalf("render markdown: %v", err)
 	}
 
-	html := string(rendered)
+	html := string(rendered.HTML)
 	for _, expected := range []string{
 		`<div class="markdown-alert markdown-alert-warning">`,
 		`<p class="markdown-alert-title">Warning</p>`,
@@ -202,7 +253,7 @@ func TestRendererBoldsDisplayOnlyGitHubReferences(t *testing.T) {
 		t.Fatalf("render markdown: %v", err)
 	}
 
-	html := string(rendered)
+	html := string(rendered.HTML)
 	for _, expected := range []string{
 		`<strong>@octocat</strong>`,
 		`<strong>@github/support</strong>`,
@@ -233,7 +284,7 @@ func TestRendererDoesNotPromoteRawHTMLBlockText(t *testing.T) {
 		t.Fatalf("render markdown: %v", err)
 	}
 
-	html := string(rendered)
+	html := string(rendered.HTML)
 	if strings.Contains(html, "<script>") || strings.Contains(html, "alert(1)") {
 		t.Fatalf("expected unsupported raw HTML block text to be omitted, got %q", html)
 	}
@@ -252,7 +303,7 @@ func TestRendererExampleGolden(t *testing.T) {
 	if err != nil {
 		t.Fatalf("render example fixture: %v", err)
 	}
-	actual := []byte(rendered)
+	actual := []byte(rendered.HTML)
 
 	if os.Getenv("UPDATE_GOLDEN") == "1" {
 		if err := os.WriteFile(goldenPath, actual, 0o644); err != nil {

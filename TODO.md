@@ -2,7 +2,6 @@
 
 Prioritized:
 
-- [ ] Table of contents
 - [ ] Dark mode
 
 Punt:

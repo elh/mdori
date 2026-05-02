@@ -212,7 +212,7 @@ func (a *app) serveDocument(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	page, err := renderPage(pageTitle(filePath), rendered)
+	page, err := renderPage(pageTitle(filePath), rendered.HTML, rendered.TOC)
 	if err != nil {
 		http.Error(w, "failed to render page", http.StatusInternalServerError)
 		return

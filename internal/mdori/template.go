@@ -34,12 +34,20 @@ var pageTmpl = template.Must(template.New("page").Parse(`<!doctype html>
       box-sizing: border-box;
     }
 
+    html {
+      scroll-padding-top: 1rem;
+    }
+
     body {
       margin: 0;
       background: var(--bg);
       color: var(--text);
       font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
       line-height: 1.6;
+    }
+
+    .toc {
+      display: none;
     }
 
     main {
@@ -68,6 +76,10 @@ var pageTmpl = template.Must(template.New("page").Parse(`<!doctype html>
 
     a {
       color: var(--link);
+    }
+
+    :target {
+      scroll-margin-top: 1rem;
     }
 
     code, pre {
@@ -189,6 +201,41 @@ var pageTmpl = template.Must(template.New("page").Parse(`<!doctype html>
       margin: 2rem 0;
     }
 
+    @media (min-width: 92rem) {
+      .toc {
+        display: block;
+        position: fixed;
+        top: 3rem;
+        left: max(1.5rem, calc((100vw - 64rem) / 2 - 14rem));
+        width: 12rem;
+        max-height: calc(100vh - 6rem);
+        overflow-y: auto;
+        padding-right: 1rem;
+        font-size: 0.875rem;
+        line-height: 1.4;
+      }
+
+      .toc-link {
+        display: block;
+        margin: 0.35rem 0;
+        color: var(--muted);
+        text-decoration: none;
+      }
+
+      .toc-link:hover {
+        color: var(--link);
+        text-decoration: underline;
+      }
+
+      .toc-level-1 {
+        font-weight: 600;
+      }
+
+      .toc-level-3 {
+        padding-left: 1rem;
+      }
+    }
+
     @media (max-width: 640px) {
       main {
         padding: 1rem 0.75rem 2rem;
@@ -201,6 +248,13 @@ var pageTmpl = template.Must(template.New("page").Parse(`<!doctype html>
   </style>
 </head>
 <body>
+  {{ if .TOC }}
+  <nav class="toc" aria-label="Table of contents">
+    {{ range .TOC }}
+    <a class="toc-link toc-level-{{ .Level }}" href="#{{ .ID }}">{{ .Text }}</a>
+    {{ end }}
+  </nav>
+  {{ end }}
   <main>
     <article>
       {{ .Body }}
@@ -219,13 +273,15 @@ var pageTmpl = template.Must(template.New("page").Parse(`<!doctype html>
 type pageData struct {
 	Title string
 	Body  template.HTML
+	TOC   []tocItem
 }
 
-func renderPage(title string, body template.HTML) ([]byte, error) {
+func renderPage(title string, body template.HTML, toc []tocItem) ([]byte, error) {
 	var buf bytes.Buffer
 	err := pageTmpl.Execute(&buf, pageData{
 		Title: title,
 		Body:  body,
+		TOC:   toc,
 	})
 	if err != nil {
 		return nil, err
