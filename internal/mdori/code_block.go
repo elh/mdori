@@ -2,6 +2,7 @@ package mdori
 
 import (
 	"html"
+	"strings"
 
 	"github.com/yuin/goldmark/ast"
 	gmrenderer "github.com/yuin/goldmark/renderer"
@@ -34,12 +35,23 @@ func (r codeBlockRenderer) renderFencedCodeBlock(w util.BufWriter, source []byte
 			language = []byte("plaintext")
 		}
 
+		if isMermaidLanguage(language) {
+			_, _ = w.WriteString(`<div class="mdori-mermaid"><pre><code>`)
+			writeCodeLines(w, source, node)
+			return ast.WalkContinue, nil
+		}
+
 		_, _ = w.WriteString(`<pre><code class="language-`)
 		_, _ = w.WriteString(html.EscapeString(string(language)))
 		_, _ = w.WriteString(`">`)
 		writeCodeLines(w, source, node)
 	} else {
-		_, _ = w.WriteString("</code></pre>\n")
+		language := n.Language(source)
+		if isMermaidLanguage(language) {
+			_, _ = w.WriteString("</code></pre></div>\n")
+		} else {
+			_, _ = w.WriteString("</code></pre>\n")
+		}
 	}
 
 	return ast.WalkContinue, nil
@@ -51,4 +63,8 @@ func writeCodeLines(w util.BufWriter, source []byte, node ast.Node) {
 		line := lines.At(i)
 		_, _ = w.Write(util.EscapeHTML(line.Value(source)))
 	}
+}
+
+func isMermaidLanguage(language []byte) bool {
+	return strings.EqualFold(strings.TrimSpace(string(language)), "mermaid")
 }

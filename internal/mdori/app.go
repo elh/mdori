@@ -174,6 +174,8 @@ func parseArgs(args []string, stderr io.Writer) (config, error) {
 func (a *app) routes() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/_mdori/prism.js", servePrismJS)
+	mux.HandleFunc("/_mdori/vendor/", serveEmbeddedAsset)
+	mux.HandleFunc("/_mdori/mdori/", serveEmbeddedAsset)
 	mux.HandleFunc("/_mdori/", http.NotFound)
 	mux.HandleFunc("/", a.serveDocument)
 	mux.HandleFunc("/events", a.serveEvents)
@@ -211,7 +213,7 @@ func (a *app) serveDocument(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	page, err := renderPage(pageTitle(filePath), rendered.HTML, rendered.TOC)
+	page, err := renderPage(pageTitle(filePath), rendered)
 	if err != nil {
 		http.Error(w, "failed to render page", http.StatusInternalServerError)
 		return

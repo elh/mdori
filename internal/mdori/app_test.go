@@ -179,6 +179,11 @@ func TestServeEmbeddedPrismAssets(t *testing.T) {
 	if !strings.Contains(page, `<script defer src="/_mdori/prism.js"></script>`) {
 		t.Fatalf("expected rendered page to load prism js, got %q", page)
 	}
+	for _, unexpected := range []string{"katex", "beautiful-mermaid", "/_mdori/mdori/math.js", "/_mdori/mdori/mermaid.js"} {
+		if strings.Contains(page, unexpected) {
+			t.Fatalf("did not expect optional asset %q on plain page, got %q", unexpected, page)
+		}
+	}
 	for _, expected := range []string{`.token.keyword`, `pre code[class*="language-"]`} {
 		if !strings.Contains(page, expected) {
 			t.Fatalf("expected rendered page to include prism token css %q, got %q", expected, page)
@@ -213,6 +218,149 @@ func TestServeEmbeddedPrismAssets(t *testing.T) {
 	for _, expected := range []string{"Prism.languages.go", "languages.bash", "languages.markdown"} {
 		if !strings.Contains(string(js), expected) {
 			t.Fatalf("expected prism js to include %q", expected)
+		}
+	}
+}
+
+func TestServeEmbeddedOptionalAssets(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	path := filepath.Join(dir, "index.md")
+	if err := os.WriteFile(path, []byte("Inline $x$.\n\n```mermaid\ngraph TD\n  A --> B\n```\n"), 0o644); err != nil {
+		t.Fatalf("write markdown: %v", err)
+	}
+
+	handler := (&app{
+		sourcePath: path,
+		rootDir:    dir,
+		renderer:   newRenderer(),
+	}).routes()
+
+	server := httptest.NewServer(handler)
+	defer server.Close()
+
+	page := getBody(t, server.URL+"/index.md")
+	for _, expected := range []string{
+		`/_mdori/vendor/katex/katex.min.css`,
+		`/_mdori/vendor/katex/katex.min.js`,
+		`/_mdori/mdori/math.js`,
+		`/_mdori/vendor/beautiful-mermaid/beautiful-mermaid.min.js`,
+		`/_mdori/mdori/mermaid.js`,
+	} {
+		if !strings.Contains(page, expected) {
+			t.Fatalf("expected page to include %q, got %q", expected, page)
+		}
+	}
+
+	for _, tc := range []struct {
+		path        string
+		contentType string
+		contains    string
+	}{
+		{"/_mdori/vendor/katex/katex.min.css", "text/css", ".katex"},
+		{"/_mdori/vendor/katex/katex.min.js", "text/javascript", "katex"},
+		{"/_mdori/vendor/katex/fonts/KaTeX_Main-Regular.woff2", "font/woff2", ""},
+		{"/_mdori/vendor/beautiful-mermaid/beautiful-mermaid.min.js", "text/javascript", "mdoriBeautifulMermaid"},
+		{"/_mdori/mdori/math.js", "text/javascript", "katex.render"},
+		{"/_mdori/mdori/mermaid.js", "text/javascript", "renderMermaidSVG"},
+	} {
+		resp, err := http.Get(server.URL + tc.path)
+		if err != nil {
+			t.Fatalf("get %s: %v", tc.path, err)
+		}
+		body, err := io.ReadAll(resp.Body)
+		resp.Body.Close()
+		if err != nil {
+			t.Fatalf("read %s: %v", tc.path, err)
+		}
+		if resp.StatusCode != http.StatusOK {
+			t.Fatalf("expected %s status 200, got %d", tc.path, resp.StatusCode)
+		}
+		if contentType := resp.Header.Get("Content-Type"); !strings.HasPrefix(contentType, tc.contentType) {
+			t.Fatalf("expected %s content type %q, got %q", tc.path, tc.contentType, contentType)
+		}
+		if tc.contains != "" && !strings.Contains(string(body), tc.contains) {
+			t.Fatalf("expected %s to contain %q", tc.path, tc.contains)
+		}
+	}
+}
+
+func TestServeSimpleExampleDoesNotIncludeOptionalAssets(t *testing.T) {
+	t.Parallel()
+
+	server := serveTestdataMarkdown(t, "simple_example.md")
+	page := getBody(t, server.URL+"/simple_example.md")
+	for _, expected := range []string{
+		`<h2 id="simple-example">Simple Example</h2>`,
+		`This is a short paragraph with <code>inline code</code> and <strong>bold text</strong>.`,
+		`<li>One <strong>important</strong> item</li>`,
+	} {
+		if !strings.Contains(page, expected) {
+			t.Fatalf("expected simple page to include %q, got %q", expected, page)
+		}
+	}
+	for _, unexpected := range []string{
+		`/_mdori/vendor/katex/katex.min.css`,
+		`/_mdori/vendor/katex/katex.min.js`,
+		`/_mdori/mdori/math.js`,
+		`/_mdori/vendor/beautiful-mermaid/beautiful-mermaid.min.js`,
+		`/_mdori/mdori/mermaid.js`,
+	} {
+		if strings.Contains(page, unexpected) {
+			t.Fatalf("did not expect simple page to include optional asset %q, got %q", unexpected, page)
+		}
+	}
+}
+
+func TestServeMathExampleDoesNotIncludeMermaidAssets(t *testing.T) {
+	t.Parallel()
+
+	server := serveTestdataMarkdown(t, "math_example.md")
+	page := getBody(t, server.URL+"/math_example.md")
+	for _, expected := range []string{
+		`/_mdori/vendor/katex/katex.min.css`,
+		`/_mdori/vendor/katex/katex.min.js`,
+		`/_mdori/mdori/math.js`,
+		`<span class="mdori-math mdori-math-inline">a^2 + b^2 = c^2</span>`,
+		`<div class="mdori-math mdori-math-display">\sum_{n=1}^{3} n = 6`,
+	} {
+		if !strings.Contains(page, expected) {
+			t.Fatalf("expected math page to include %q, got %q", expected, page)
+		}
+	}
+	for _, unexpected := range []string{
+		`/_mdori/vendor/beautiful-mermaid/beautiful-mermaid.min.js`,
+		`/_mdori/mdori/mermaid.js`,
+	} {
+		if strings.Contains(page, unexpected) {
+			t.Fatalf("did not expect math page to include %q, got %q", unexpected, page)
+		}
+	}
+}
+
+func TestServeMermaidExampleDoesNotIncludeMathAssets(t *testing.T) {
+	t.Parallel()
+
+	server := serveTestdataMarkdown(t, "mermaid_example.md")
+	page := getBody(t, server.URL+"/mermaid_example.md")
+	for _, expected := range []string{
+		`/_mdori/vendor/beautiful-mermaid/beautiful-mermaid.min.js`,
+		`/_mdori/mdori/mermaid.js`,
+		`<div class="mdori-mermaid"><pre><code>flowchart TD`,
+		`A[Start] --&gt; B[Done]`,
+	} {
+		if !strings.Contains(page, expected) {
+			t.Fatalf("expected mermaid page to include %q, got %q", expected, page)
+		}
+	}
+	for _, unexpected := range []string{
+		`/_mdori/vendor/katex/katex.min.css`,
+		`/_mdori/vendor/katex/katex.min.js`,
+		`/_mdori/mdori/math.js`,
+	} {
+		if strings.Contains(page, unexpected) {
+			t.Fatalf("did not expect mermaid page to include %q, got %q", unexpected, page)
 		}
 	}
 }
@@ -584,4 +732,29 @@ func getBody(t *testing.T, url string) string {
 	}
 
 	return string(body)
+}
+
+func serveTestdataMarkdown(t *testing.T, name string) *httptest.Server {
+	t.Helper()
+
+	source, err := os.ReadFile(filepath.Join("testdata", name))
+	if err != nil {
+		t.Fatalf("read %s: %v", name, err)
+	}
+
+	dir := t.TempDir()
+	path := filepath.Join(dir, name)
+	if err := os.WriteFile(path, source, 0o644); err != nil {
+		t.Fatalf("write %s: %v", name, err)
+	}
+
+	handler := (&app{
+		sourcePath: path,
+		rootDir:    dir,
+		renderer:   newRenderer(),
+	}).routes()
+
+	server := httptest.NewServer(handler)
+	t.Cleanup(server.Close)
+	return server
 }

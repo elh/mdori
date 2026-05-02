@@ -286,10 +286,10 @@ func main() {
 </code></pre>
 <h2 id="diagrams">Diagrams</h2>
 <p>Mermaid:</p>
-<pre><code class="language-mermaid">flowchart TD
+<div class="mdori-mermaid"><pre><code>flowchart TD
 	A[Start] --&gt; B{Ready?}
 	B --&gt;|yes| C[Render]
-</code></pre>
+</code></pre></div>
 <p>GeoJSON:</p>
 <pre><code class="language-geojson">{
   &quot;type&quot;: &quot;Feature&quot;,
@@ -332,11 +332,10 @@ func main() {
 endsolid cube_corner
 </code></pre>
 <h2 id="mathematical-expressions">Mathematical Expressions</h2>
-<p>Inline math: $E = mc^2$.</p>
+<p>Inline math: <span class="mdori-math mdori-math-inline">E = mc^2</span>.</p>
 <p>Block math:</p>
-<p>$$
-\int_0^1 x^2 dx = \frac{1}{3}
-$$</p>
+<div class="mdori-math mdori-math-display">\int_0^1 x^2 dx = \frac{1}{3}
+</div>
 <h2 id="footnotes">Footnotes</h2>
 <p>Here is a sentence with a footnote.<sup id="fnref:1"><a href="#fn:1" class="footnote-ref" role="doc-noteref">1</a></sup></p>
 <p>Here is another reference to the same footnote.<sup id="fnref1:1"><a href="#fn:1" class="footnote-ref" role="doc-noteref">1</a></sup></p>

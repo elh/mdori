@@ -26,21 +26,30 @@ var pageTmpl = template.Must(template.New("page").Parse(`<!doctype html>
     })();
   </script>
   <script defer src="/_mdori/prism.js"></script>
+  {{ if .NeedsMath }}
+  <link rel="stylesheet" href="/_mdori/vendor/katex/katex.min.css">
+  <script defer src="/_mdori/vendor/katex/katex.min.js"></script>
+  <script defer src="/_mdori/mdori/math.js"></script>
+  {{ end }}
+  {{ if .NeedsMermaid }}
+  <script defer src="/_mdori/vendor/beautiful-mermaid/beautiful-mermaid.min.js"></script>
+  <script defer src="/_mdori/mdori/mermaid.js"></script>
+  {{ end }}
   <style>
     :root {
       color-scheme: light;
-      --color-bg: #fafaf9;
-      --color-text: #292524;
-      --color-muted: #57534e;
-      --color-border: #d6d3d1;
-      --color-code-bg: #f5f5f4;
-      --color-control-bg: #fafaf9;
-      --color-control-text: #292524;
-      --color-table-header-bg: #f5f5f4;
-      --color-quote: #a8a29e;
-      --color-link: #9a3412;
-      --color-kbd-shadow: #d6d3d1;
-      --color-alert-note: #57534e;
+      --color-bg: #fafafa;
+      --color-text: #262626;
+      --color-muted: #525252;
+      --color-border: #e5e5e5;
+      --color-code-bg: #f5f5f5;
+      --color-control-bg: #fafafa;
+      --color-control-text: #262626;
+      --color-table-header-bg: #f5f5f5;
+      --color-quote: #a3a3a3;
+      --color-link: #0969da;
+      --color-kbd-shadow: #d4d4d4;
+      --color-alert-note: #525252;
       --color-alert-tip: #15803d;
       --color-alert-important: #6d28d9;
       --color-alert-warning: #a16207;
@@ -86,18 +95,18 @@ var pageTmpl = template.Must(template.New("page").Parse(`<!doctype html>
 
     html[data-theme="dark"] {
       color-scheme: dark;
-      --color-bg: #0c0a09;
-      --color-text: #e7e5e4;
-      --color-muted: #a8a29e;
-      --color-border: #44403c;
-      --color-code-bg: #1c1917;
-      --color-control-bg: #1c1917;
-      --color-control-text: #e7e5e4;
-      --color-table-header-bg: #1c1917;
-      --color-quote: #57534e;
-      --color-link: #fdba74;
-      --color-kbd-shadow: #44403c;
-      --color-alert-note: #d6d3d1;
+      --color-bg: #0a0a0a;
+      --color-text: #e5e5e5;
+      --color-muted: #a3a3a3;
+      --color-border: #404040;
+      --color-code-bg: #1f1f1f;
+      --color-control-bg: #171717;
+      --color-control-text: #e5e5e5;
+      --color-table-header-bg: #171717;
+      --color-quote: #525252;
+      --color-link: #58a6ff;
+      --color-kbd-shadow: #404040;
+      --color-alert-note: #d4d4d4;
       --color-alert-tip: #3fb950;
       --color-alert-important: #c4b5fd;
       --color-alert-warning: #d29922;
@@ -116,18 +125,18 @@ var pageTmpl = template.Must(template.New("page").Parse(`<!doctype html>
     @media (prefers-color-scheme: dark) {
       html[data-theme="system"] {
         color-scheme: dark;
-        --color-bg: #0c0a09;
-        --color-text: #e7e5e4;
-        --color-muted: #a8a29e;
-        --color-border: #44403c;
-        --color-code-bg: #1c1917;
-        --color-control-bg: #1c1917;
-        --color-control-text: #e7e5e4;
-        --color-table-header-bg: #1c1917;
-        --color-quote: #57534e;
-        --color-link: #fdba74;
-        --color-kbd-shadow: #44403c;
-        --color-alert-note: #d6d3d1;
+        --color-bg: #0a0a0a;
+        --color-text: #e5e5e5;
+        --color-muted: #a3a3a3;
+        --color-border: #404040;
+        --color-code-bg: #1f1f1f;
+        --color-control-bg: #171717;
+        --color-control-text: #e5e5e5;
+        --color-table-header-bg: #171717;
+        --color-quote: #525252;
+        --color-link: #58a6ff;
+        --color-kbd-shadow: #404040;
+        --color-alert-note: #d4d4d4;
         --color-alert-tip: #3fb950;
         --color-alert-important: #c4b5fd;
         --color-alert-warning: #d29922;
@@ -216,6 +225,23 @@ var pageTmpl = template.Must(template.New("page").Parse(`<!doctype html>
 
     p, ul, ol, pre, blockquote, .table-scroll {
       margin: var(--space-block) 0;
+    }
+
+    .mdori-math-display,
+    .mdori-mermaid {
+      overflow-x: auto;
+    }
+
+    .mdori-mermaid svg {
+      display: block;
+      max-width: 100%;
+      height: auto;
+    }
+
+    .mdori-mermaid-error {
+      color: var(--color-alert-caution);
+      font-size: var(--text-sm);
+      margin: 0 0 0.5rem;
     }
 
     ul, ol {
@@ -582,17 +608,21 @@ var pageTmpl = template.Must(template.New("page").Parse(`<!doctype html>
 `))
 
 type pageData struct {
-	Title string
-	Body  template.HTML
-	TOC   []tocItem
+	Title        string
+	Body         template.HTML
+	TOC          []tocItem
+	NeedsMath    bool
+	NeedsMermaid bool
 }
 
-func renderPage(title string, body template.HTML, toc []tocItem) ([]byte, error) {
+func renderPage(title string, rendered renderedDocument) ([]byte, error) {
 	var buf bytes.Buffer
 	err := pageTmpl.Execute(&buf, pageData{
-		Title: title,
-		Body:  body,
-		TOC:   toc,
+		Title:        title,
+		Body:         rendered.HTML,
+		TOC:          rendered.TOC,
+		NeedsMath:    rendered.NeedsMath,
+		NeedsMermaid: rendered.NeedsMermaid,
 	})
 	if err != nil {
 		return nil, err

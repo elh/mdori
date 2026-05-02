@@ -19,5 +19,5 @@ usage: mdori [-addr host:port] [-no-open] <markdown-file>
 <br>
 <br>
 
-Unsupported: Mermaid, math expressions, GeoJSON/TopoJSON/STL diagrams, emoji
-shortcodes, and repository-specific autolinks.
+Unsupported: GeoJSON/TopoJSON/STL diagrams, emoji shortcodes, and
+repository-specific autolinks.

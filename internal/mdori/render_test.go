@@ -75,6 +75,40 @@ func TestRendererBuildsTableOfContents(t *testing.T) {
 	}
 }
 
+func TestRendererOmitsTrivialTableOfContents(t *testing.T) {
+	t.Parallel()
+
+	for _, source := range []string{
+		"# Only Heading\n\nBody.\n",
+		"# Title\n\n## Only Section\n\nBody.\n",
+	} {
+		rendered, err := newRenderer().render([]byte(source))
+		if err != nil {
+			t.Fatalf("render markdown: %v", err)
+		}
+		if len(rendered.TOC) != 0 {
+			t.Fatalf("expected no TOC for %q, got %#v", source, rendered.TOC)
+		}
+	}
+}
+
+func TestRendererKeepsTableOfContentsForMultipleSections(t *testing.T) {
+	t.Parallel()
+
+	for _, source := range []string{
+		"## First\n\n## Second\n",
+		"# Title\n\n## First\n\n## Second\n",
+	} {
+		rendered, err := newRenderer().render([]byte(source))
+		if err != nil {
+			t.Fatalf("render markdown: %v", err)
+		}
+		if len(rendered.TOC) == 0 {
+			t.Fatalf("expected TOC for %q", source)
+		}
+	}
+}
+
 func TestRendererUsesPlaintextClassForCodeBlocksWithoutLanguage(t *testing.T) {
 	t.Parallel()
 
@@ -90,13 +124,87 @@ func TestRendererUsesPlaintextClassForCodeBlocksWithoutLanguage(t *testing.T) {
 	}
 }
 
+func TestRendererSupportsMathExpressions(t *testing.T) {
+	t.Parallel()
+
+	source := []byte("Inline $E = mc^2$.\n\n$$\n<a_b>\n$$\n")
+	rendered, err := newRenderer().render(source)
+	if err != nil {
+		t.Fatalf("render markdown: %v", err)
+	}
+
+	html := string(rendered.HTML)
+	for _, expected := range []string{
+		`<span class="mdori-math mdori-math-inline">E = mc^2</span>`,
+		`<div class="mdori-math mdori-math-display">&lt;a_b&gt;`,
+	} {
+		if !strings.Contains(html, expected) {
+			t.Fatalf("expected %q in output, got %q", expected, html)
+		}
+	}
+	if !rendered.NeedsMath {
+		t.Fatalf("expected math feature flag")
+	}
+	if rendered.NeedsMermaid {
+		t.Fatalf("did not expect mermaid feature flag")
+	}
+}
+
+func TestRendererDoesNotParseEscapedDollarOrCodeAsMath(t *testing.T) {
+	t.Parallel()
+
+	source := []byte(`Escaped \$x$ and code ` + "`$y$`" + ".\n\n```\n$z$\n```\n")
+	rendered, err := newRenderer().render(source)
+	if err != nil {
+		t.Fatalf("render markdown: %v", err)
+	}
+
+	html := string(rendered.HTML)
+	if strings.Contains(html, "mdori-math") {
+		t.Fatalf("did not expect math placeholders, got %q", html)
+	}
+	if rendered.NeedsMath {
+		t.Fatalf("did not expect math feature flag")
+	}
+}
+
+func TestRendererSupportsMermaidFences(t *testing.T) {
+	t.Parallel()
+
+	source := []byte("```mermaid\ngraph TD\n  A[<Start>] --> B\n```\n\n```go\npackage main\n```\n")
+	rendered, err := newRenderer().render(source)
+	if err != nil {
+		t.Fatalf("render markdown: %v", err)
+	}
+
+	html := string(rendered.HTML)
+	for _, expected := range []string{
+		`<div class="mdori-mermaid"><pre><code>graph TD`,
+		`A[&lt;Start&gt;] --&gt; B`,
+		`<pre><code class="language-go">package main`,
+	} {
+		if !strings.Contains(html, expected) {
+			t.Fatalf("expected %q in output, got %q", expected, html)
+		}
+	}
+	if !rendered.NeedsMermaid {
+		t.Fatalf("expected mermaid feature flag")
+	}
+	if rendered.NeedsMath {
+		t.Fatalf("did not expect math feature flag")
+	}
+}
+
 func TestRenderPageIncludesTableOfContents(t *testing.T) {
 	t.Parallel()
 
-	page, err := renderPage("doc", template.HTML(`<h2 id="first">First</h2>`), []tocItem{
-		{Level: 1, ID: "title", Text: "Title"},
-		{Level: 2, ID: "first", Text: "First"},
-		{Level: 3, ID: "child", Text: "Child"},
+	page, err := renderPage("doc", renderedDocument{
+		HTML: template.HTML(`<h2 id="first">First</h2>`),
+		TOC: []tocItem{
+			{Level: 1, ID: "title", Text: "Title"},
+			{Level: 2, ID: "first", Text: "First"},
+			{Level: 3, ID: "child", Text: "Child"},
+		},
 	})
 	if err != nil {
 		t.Fatalf("render page: %v", err)
@@ -118,7 +226,7 @@ func TestRenderPageIncludesTableOfContents(t *testing.T) {
 func TestRenderPageIncludesThemeSelector(t *testing.T) {
 	t.Parallel()
 
-	page, err := renderPage("doc", template.HTML(`<h1 id="doc">Doc</h1>`), nil)
+	page, err := renderPage("doc", renderedDocument{HTML: template.HTML(`<h1 id="doc">Doc</h1>`)})
 	if err != nil {
 		t.Fatalf("render page: %v", err)
 	}
@@ -138,6 +246,73 @@ func TestRenderPageIncludesThemeSelector(t *testing.T) {
 	} {
 		if !strings.Contains(html, expected) {
 			t.Fatalf("expected %q in output, got %q", expected, html)
+		}
+	}
+}
+
+func TestRenderPageConditionallyIncludesMathAssets(t *testing.T) {
+	t.Parallel()
+
+	page, err := renderPage("doc", renderedDocument{
+		HTML:      template.HTML(`<p><span class="mdori-math mdori-math-inline">x</span></p>`),
+		NeedsMath: true,
+	})
+	if err != nil {
+		t.Fatalf("render page: %v", err)
+	}
+
+	html := string(page)
+	for _, expected := range []string{
+		`<link rel="stylesheet" href="/_mdori/vendor/katex/katex.min.css">`,
+		`<script defer src="/_mdori/vendor/katex/katex.min.js"></script>`,
+		`<script defer src="/_mdori/mdori/math.js"></script>`,
+	} {
+		if !strings.Contains(html, expected) {
+			t.Fatalf("expected %q in output, got %q", expected, html)
+		}
+	}
+	if strings.Contains(html, "beautiful-mermaid") {
+		t.Fatalf("did not expect mermaid assets in math page, got %q", html)
+	}
+}
+
+func TestRenderPageConditionallyIncludesMermaidAssets(t *testing.T) {
+	t.Parallel()
+
+	page, err := renderPage("doc", renderedDocument{
+		HTML:         template.HTML(`<div class="mdori-mermaid"></div>`),
+		NeedsMermaid: true,
+	})
+	if err != nil {
+		t.Fatalf("render page: %v", err)
+	}
+
+	html := string(page)
+	for _, expected := range []string{
+		`<script defer src="/_mdori/vendor/beautiful-mermaid/beautiful-mermaid.min.js"></script>`,
+		`<script defer src="/_mdori/mdori/mermaid.js"></script>`,
+	} {
+		if !strings.Contains(html, expected) {
+			t.Fatalf("expected %q in output, got %q", expected, html)
+		}
+	}
+	if strings.Contains(html, "katex") {
+		t.Fatalf("did not expect math assets in mermaid page, got %q", html)
+	}
+}
+
+func TestRenderPageOmitsOptionalAssetsForPlainMarkdown(t *testing.T) {
+	t.Parallel()
+
+	page, err := renderPage("doc", renderedDocument{HTML: template.HTML(`<p>plain</p>`)})
+	if err != nil {
+		t.Fatalf("render page: %v", err)
+	}
+
+	html := string(page)
+	for _, unexpected := range []string{"katex", "beautiful-mermaid", "/_mdori/mdori/math.js", "/_mdori/mdori/mermaid.js"} {
+		if strings.Contains(html, unexpected) {
+			t.Fatalf("did not expect %q in output, got %q", unexpected, html)
 		}
 	}
 }
@@ -317,35 +492,39 @@ func TestRendererDoesNotPromoteRawHTMLBlockText(t *testing.T) {
 	}
 }
 
-func TestRendererExampleGolden(t *testing.T) {
-	sourcePath := filepath.Join("testdata", "example.md")
-	goldenPath := filepath.Join("testdata", "example.golden.html")
+func TestRendererGoldens(t *testing.T) {
+	for _, name := range []string{"example", "simple_example", "math_example", "mermaid_example"} {
+		t.Run(name, func(t *testing.T) {
+			sourcePath := filepath.Join("testdata", name+".md")
+			goldenPath := filepath.Join("testdata", name+".golden.html")
 
-	source, err := os.ReadFile(sourcePath)
-	if err != nil {
-		t.Fatalf("read example fixture: %v", err)
-	}
+			source, err := os.ReadFile(sourcePath)
+			if err != nil {
+				t.Fatalf("read %s fixture: %v", name, err)
+			}
 
-	rendered, err := newRenderer().render(source)
-	if err != nil {
-		t.Fatalf("render example fixture: %v", err)
-	}
-	actual := []byte(rendered.HTML)
+			rendered, err := newRenderer().render(source)
+			if err != nil {
+				t.Fatalf("render %s fixture: %v", name, err)
+			}
+			actual := []byte(rendered.HTML)
 
-	if os.Getenv("UPDATE_GOLDEN") == "1" {
-		if err := os.WriteFile(goldenPath, actual, 0o644); err != nil {
-			t.Fatalf("update golden fixture: %v", err)
-		}
-	}
+			if os.Getenv("UPDATE_GOLDEN") == "1" {
+				if err := os.WriteFile(goldenPath, actual, 0o644); err != nil {
+					t.Fatalf("update %s golden fixture: %v", name, err)
+				}
+			}
 
-	expected, err := os.ReadFile(goldenPath)
-	if err != nil {
-		t.Fatalf("read golden fixture: %v", err)
-	}
+			expected, err := os.ReadFile(goldenPath)
+			if err != nil {
+				t.Fatalf("read %s golden fixture: %v", name, err)
+			}
 
-	if !bytes.Equal(actual, expected) {
-		index := firstDiffIndex(actual, expected)
-		t.Fatalf("rendered HTML differs from golden at byte %d\nexpected: %s\nactual:   %s\naccept with: UPDATE_GOLDEN=1 go test ./internal/mdori", index, excerptAt(expected, index), excerptAt(actual, index))
+			if !bytes.Equal(actual, expected) {
+				index := firstDiffIndex(actual, expected)
+				t.Fatalf("rendered HTML differs from %s golden at byte %d\nexpected: %s\nactual:   %s\naccept with: UPDATE_GOLDEN=1 go test ./internal/mdori", name, index, excerptAt(expected, index), excerptAt(actual, index))
+			}
+		})
 	}
 }
 
