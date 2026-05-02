@@ -17,9 +17,12 @@ and <code>hsl(212, 92%, 45%)</code>.</p>
 document</a>, or a <a href="/README.md">repository-root path</a>.</p>
 <p>Section links can point to <a href="#tables">the tables section</a> and
 <a href="#duplicate-heading">the duplicate heading</a>.</p>
-<p><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/57/Markdown-mark-purple.svg/250px-Markdown-mark-purple.svg.png" alt="Alt text for an image" title="Example image"></p>
-<p><a href="https://www.wikimedia.org"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/57/Markdown-mark-purple.svg/250px-Markdown-mark-purple.svg.png" alt="Linked image alt text"></a></p>
-<p><img src="./markdown_pink.png" alt="Relative image alt text"></p>
+<p>Image:<br />
+<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f9/Markdown-mark-8th.svg/40px-Markdown-mark-8th.svg.png?utm_source=commons.wikimedia.org&amp;utm_campaign=index&amp;utm_content=thumbnail" alt="Alt text for an image" title="Example image"></p>
+<p>Image in link:<br />
+<a href="https://www.wikimedia.org"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f9/Markdown-mark-8th.svg/40px-Markdown-mark-8th.svg.png?utm_source=commons.wikimedia.org&amp;utm_campaign=index&amp;utm_content=thumbnail" alt="Linked image alt text"></a></p>
+<p>Relative image:<br />
+<img src="./markdown.png" alt="Relative image alt text"></p>
 <h2 id="headings">Headings</h2>
 <h1 id="h1">H1</h1>
 <h2 id="h2">H2</h2>
@@ -371,12 +374,14 @@ $$</p>
 <summary>Expandable details</summary>
 <p>Details content can include <strong>Markdown formatting</strong>.</p>
 </details>
-<img alt="img tag" src="markdown_pink.png" />
+<p>Image tag:<br />
+<img alt="img tag" src="markdown.png" /></p>
+<p>Picture tag (with theme-aware source):</p>
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="markdown_pink.png" />
   <img alt="Theme-aware example" src="markdown.png" />
 </picture>
-<p>HTML comments can hide content.</p>
+<p>HTML comments can hide content. Next line should not say &quot;hidden&quot;.</p>
 <!-- raw HTML omitted -->
 <!-- raw HTML omitted -->
 <p>Escaped raw HTML remains visible as text:</p>

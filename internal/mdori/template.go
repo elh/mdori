@@ -39,7 +39,7 @@ var pageTmpl = template.Must(template.New("page").Parse(`<!doctype html>
       background: var(--bg);
       color: var(--text);
       font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
-      line-height: 1.7;
+      line-height: 1.6;
     }
 
     main {
@@ -49,7 +49,7 @@ var pageTmpl = template.Must(template.New("page").Parse(`<!doctype html>
     }
 
     article {
-      padding: 2.5rem;
+      padding: 0;
     }
 
     h1, h2, h3, h4, h5, h6 {
@@ -59,7 +59,7 @@ var pageTmpl = template.Must(template.New("page").Parse(`<!doctype html>
 
     h1 {
       margin-top: 0;
-      font-size: clamp(2.2rem, 5vw, 3rem);
+      font-size: 2rem;
     }
 
     p, ul, ol, pre, blockquote, .table-scroll {
@@ -83,7 +83,7 @@ var pageTmpl = template.Must(template.New("page").Parse(`<!doctype html>
 
     pre {
       background: var(--code-bg);
-      border-radius: 14px;
+      border-radius: 6px;
       padding: 1rem 1.1rem;
       overflow-x: auto;
     }
@@ -181,7 +181,6 @@ var pageTmpl = template.Must(template.New("page").Parse(`<!doctype html>
     img {
       max-width: 100%;
       height: auto;
-      border-radius: 10px;
     }
 
     hr {

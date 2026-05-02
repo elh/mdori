@@ -28,11 +28,14 @@ document](../../../README.md), or a [repository-root path](/README.md).
 Section links can point to [the tables section](#tables) and
 [the duplicate heading](#duplicate-heading).
 
-![Alt text for an image](https://upload.wikimedia.org/wikipedia/commons/thumb/5/57/Markdown-mark-purple.svg/250px-Markdown-mark-purple.svg.png "Example image")
+Image:<br>
+![Alt text for an image](https://upload.wikimedia.org/wikipedia/commons/thumb/f/f9/Markdown-mark-8th.svg/40px-Markdown-mark-8th.svg.png?utm_source=commons.wikimedia.org&utm_campaign=index&utm_content=thumbnail "Example image")
 
-[![Linked image alt text](https://upload.wikimedia.org/wikipedia/commons/thumb/5/57/Markdown-mark-purple.svg/250px-Markdown-mark-purple.svg.png)](https://www.wikimedia.org)
+Image in link:<br>
+[![Linked image alt text](https://upload.wikimedia.org/wikipedia/commons/thumb/f/f9/Markdown-mark-8th.svg/40px-Markdown-mark-8th.svg.png?utm_source=commons.wikimedia.org&utm_campaign=index&utm_content=thumbnail)](https://www.wikimedia.org)
 
-![Relative image alt text](./markdown_pink.png)
+Relative image:<br>
+![Relative image alt text](./markdown.png)
 
 [reference link]: https://www.markdownguide.org/basic-syntax/#reference-style-links
 
@@ -305,18 +308,21 @@ Emoji shortcodes: :sparkles: :shipit: :warning: :+1:
 Details content can include **Markdown formatting**.
 </details>
 
-<img alt="img tag" src="markdown_pink.png">
+Image tag:<br>
+<img alt="img tag" src="markdown.png">
+
+Picture tag (with theme-aware source):
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="markdown_pink.png">
   <img alt="Theme-aware example" src="markdown.png">
 </picture>
 
-HTML comments can hide content.
+HTML comments can hide content. Next line should not say "hidden".
 
-<!-- This sentence is hidden in rendered GitHub Markdown. -->
+<!-- hidden -->
 
-<!-- --><script>alert("embedded comment terminator")</script><!-- -->
+<!-- --><script>alert("this should not fire")</script><!-- -->
 
 Escaped raw HTML remains visible as text:
 

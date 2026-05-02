@@ -1,6 +1,7 @@
 package mdori
 
 import (
+	"bytes"
 	"context"
 	"io"
 	"net/http"
@@ -473,6 +474,30 @@ func TestParseArgsDefaultsAndFileResolution(t *testing.T) {
 
 	if !filepath.IsAbs(cfg.path) {
 		t.Fatalf("expected absolute path, got %q", cfg.path)
+	}
+}
+
+func TestParseArgsUsageMatchesFlagOutput(t *testing.T) {
+	t.Parallel()
+
+	var stderr bytes.Buffer
+	_, err := parseArgs(nil, &stderr)
+	if err == nil {
+		t.Fatal("expected parse args to fail without markdown file")
+	}
+
+	output := stderr.String()
+	for _, expected := range []string{
+		"usage: mdori [-addr host:port] [-no-open] <markdown-file>",
+		"  -addr string",
+		"  -no-open",
+	} {
+		if !strings.Contains(output, expected) {
+			t.Fatalf("expected usage output to contain %q, got %q", expected, output)
+		}
+	}
+	if strings.Contains(output, "--addr") || strings.Contains(output, "--no-open") {
+		t.Fatalf("expected usage output to use single-dash flag style, got %q", output)
 	}
 }
 

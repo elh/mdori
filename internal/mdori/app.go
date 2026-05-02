@@ -17,7 +17,7 @@ import (
 	"time"
 )
 
-const usageText = "usage: mdori [--addr host:port] [--no-open] <markdown-file>\n"
+const usageText = "usage: mdori [-addr host:port] [-no-open] <markdown-file>\n"
 
 type config struct {
 	addr        string
