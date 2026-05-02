@@ -21,6 +21,7 @@ func newRenderer() *renderer {
 			goldmark.WithExtensions(extension.GFM, extension.Footnote),
 			goldmark.WithParserOptions(parser.WithAutoHeadingID()),
 			goldmark.WithRendererOptions(gmrenderer.WithNodeRenderers(
+				util.Prioritized(codeBlockRenderer{}, 400),
 				util.Prioritized(safeHTMLRenderer{}, 400),
 			)),
 		),

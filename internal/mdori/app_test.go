@@ -148,6 +148,110 @@ func TestServeDocumentServesRelativeStaticFiles(t *testing.T) {
 	}
 }
 
+func TestServeEmbeddedPrismAssets(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	path := filepath.Join(dir, "index.md")
+	if err := os.WriteFile(path, []byte("# Index\n"), 0o644); err != nil {
+		t.Fatalf("write markdown: %v", err)
+	}
+
+	handler := (&app{
+		sourcePath: path,
+		rootDir:    dir,
+		renderer:   newRenderer(),
+	}).routes()
+
+	server := httptest.NewServer(handler)
+	defer server.Close()
+
+	page := getBody(t, server.URL+"/index.md")
+	if !strings.Contains(page, `<link rel="stylesheet" href="/_mdori/prism.css">`) {
+		t.Fatalf("expected rendered page to load prism css, got %q", page)
+	}
+	if !strings.Contains(page, `<script defer src="/_mdori/prism.js"></script>`) {
+		t.Fatalf("expected rendered page to load prism js, got %q", page)
+	}
+
+	resp, err := http.Get(server.URL + "/_mdori/prism.css")
+	if err != nil {
+		t.Fatalf("get prism css: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected prism css status 200, got %d", resp.StatusCode)
+	}
+	if contentType := resp.Header.Get("Content-Type"); !strings.HasPrefix(contentType, "text/css") {
+		t.Fatalf("expected prism css content type, got %q", contentType)
+	}
+	css, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatalf("read prism css: %v", err)
+	}
+	if !strings.Contains(string(css), "code[class*=language-]") {
+		t.Fatalf("expected prism css body, got %q", css)
+	}
+
+	resp, err = http.Get(server.URL + "/_mdori/prism.js")
+	if err != nil {
+		t.Fatalf("get prism js: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected prism js status 200, got %d", resp.StatusCode)
+	}
+	if contentType := resp.Header.Get("Content-Type"); !strings.HasPrefix(contentType, "text/javascript") {
+		t.Fatalf("expected prism js content type, got %q", contentType)
+	}
+	js, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatalf("read prism js: %v", err)
+	}
+	for _, expected := range []string{"Prism.languages.go", "languages.bash", "languages.markdown"} {
+		if !strings.Contains(string(js), expected) {
+			t.Fatalf("expected prism js to include %q", expected)
+		}
+	}
+}
+
+func TestServeEmbeddedPrismPrefixDoesNotFallThroughToRoot(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	internalDir := filepath.Join(dir, "_mdori")
+	if err := os.Mkdir(internalDir, 0o755); err != nil {
+		t.Fatalf("make internal-looking directory: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(internalDir, "secret.txt"), []byte("secret"), 0o644); err != nil {
+		t.Fatalf("write internal-looking file: %v", err)
+	}
+
+	path := filepath.Join(dir, "index.md")
+	if err := os.WriteFile(path, []byte("# Index\n"), 0o644); err != nil {
+		t.Fatalf("write markdown: %v", err)
+	}
+
+	handler := (&app{
+		sourcePath: path,
+		rootDir:    dir,
+		renderer:   newRenderer(),
+	}).routes()
+
+	req := httptest.NewRequest(http.MethodGet, "http://example.com/_mdori/secret.txt", nil)
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("expected internal asset prefix status 404, got %d with body %q", rec.Code, rec.Body.String())
+	}
+	if strings.Contains(rec.Body.String(), "secret") {
+		t.Fatalf("expected internal asset prefix not to expose file body, got %q", rec.Body.String())
+	}
+}
+
 func TestServeDocumentDoesNotRenderSourceAtRoot(t *testing.T) {
 	t.Parallel()
 

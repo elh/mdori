@@ -31,6 +31,21 @@ func TestRendererSupportsGitHubFlavoredMarkdown(t *testing.T) {
 	}
 }
 
+func TestRendererUsesPlaintextClassForCodeBlocksWithoutLanguage(t *testing.T) {
+	t.Parallel()
+
+	source := []byte("Indented code:\n\n    package main\n\nFence without language:\n\n```\nplain\n```\n")
+	rendered, err := newRenderer().render(source)
+	if err != nil {
+		t.Fatalf("render markdown: %v", err)
+	}
+
+	html := string(rendered)
+	if count := strings.Count(html, `<code class="language-plaintext">`); count != 2 {
+		t.Fatalf("expected two plaintext code blocks, got %d in %q", count, html)
+	}
+}
+
 func TestRendererDoesNotAllowRawHTMLByDefault(t *testing.T) {
 	t.Parallel()
 

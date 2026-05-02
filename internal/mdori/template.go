@@ -11,6 +11,8 @@ var pageTmpl = template.Must(template.New("page").Parse(`<!doctype html>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{ .Title }}</title>
+  <link rel="stylesheet" href="/_mdori/prism.css">
+  <script defer src="/_mdori/prism.js"></script>
   <style>
     :root {
       color-scheme: light;

@@ -173,6 +173,9 @@ func parseArgs(args []string, stderr io.Writer) (config, error) {
 
 func (a *app) routes() http.Handler {
 	mux := http.NewServeMux()
+	mux.HandleFunc("/_mdori/prism.css", servePrismCSS)
+	mux.HandleFunc("/_mdori/prism.js", servePrismJS)
+	mux.HandleFunc("/_mdori/", http.NotFound)
 	mux.HandleFunc("/", a.serveDocument)
 	mux.HandleFunc("/events", a.serveEvents)
 	return mux
