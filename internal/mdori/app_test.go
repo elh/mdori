@@ -45,6 +45,14 @@ func TestServeDocumentReloadsSourceOnEachRequest(t *testing.T) {
 	}
 }
 
+func TestPageTitleIncludesMarkdownExtension(t *testing.T) {
+	t.Parallel()
+
+	if got := pageTitle(filepath.Join("docs", "README.md")); got != "README.md" {
+		t.Fatalf("expected title to include markdown extension, got %q", got)
+	}
+}
+
 func TestServeDocumentFollowsRelativeMarkdownLinks(t *testing.T) {
 	t.Parallel()
 

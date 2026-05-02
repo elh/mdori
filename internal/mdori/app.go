@@ -387,7 +387,5 @@ func (a *app) serveEvents(w http.ResponseWriter, r *http.Request) {
 }
 
 func pageTitle(path string) string {
-	base := filepath.Base(path)
-	ext := filepath.Ext(base)
-	return strings.TrimSuffix(base, ext)
+	return filepath.Base(path)
 }

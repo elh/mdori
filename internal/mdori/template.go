@@ -30,21 +30,22 @@ var pageTmpl = template.Must(template.New("page").Parse(`<!doctype html>
   <style>
     :root {
       color-scheme: light;
-      --color-bg: #ffffff;
-      --color-text: #1f2328;
-      --color-muted: #59636e;
-      --color-border: #d0d7de;
-      --color-code-bg: #f6f8fa;
-      --color-control-bg: #ffffff;
-      --color-control-text: #1f2328;
-      --color-quote: #8c959f;
-      --color-link: #0f5c83;
-      --color-kbd-shadow: #d0d7de;
-      --color-alert-note: #0969da;
-      --color-alert-tip: #1a7f37;
-      --color-alert-important: #8250df;
-      --color-alert-warning: #9a6700;
-      --color-alert-caution: #cf222e;
+      --color-bg: #fafaf9;
+      --color-text: #292524;
+      --color-muted: #57534e;
+      --color-border: #d6d3d1;
+      --color-code-bg: #f5f5f4;
+      --color-control-bg: #fafaf9;
+      --color-control-text: #292524;
+      --color-table-header-bg: #f5f5f4;
+      --color-quote: #a8a29e;
+      --color-link: #9a3412;
+      --color-kbd-shadow: #d6d3d1;
+      --color-alert-note: #57534e;
+      --color-alert-tip: #15803d;
+      --color-alert-important: #6d28d9;
+      --color-alert-warning: #a16207;
+      --color-alert-caution: #b91c1c;
       --color-syntax-text: #24292f;
       --color-syntax-comment: #6e7781;
       --color-syntax-punctuation: #57606a;
@@ -55,45 +56,51 @@ var pageTmpl = template.Must(template.New("page").Parse(`<!doctype html>
       --color-syntax-operator: #0550ae;
       --color-syntax-selection: #b3d4fc;
       --font-body: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
-      --font-mono: ui-monospace, "SFMono-Regular", "SF Mono", Menlo, Consolas, monospace;
-      --text-sm: 0.875rem;
-      --text-code: 0.92em;
-      --text-h1: 2rem;
+      --font-mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+      --text-body: 13.5px;
+      --text-sm: 0.85rem;
+      --text-xs: 0.78rem;
+      --text-code: 0.875em;
+      --text-code-block: 0.85em;
+      --text-h1: 1.7rem;
+      --text-h2: 1.35rem;
+      --text-h3: 1.15rem;
       --weight-normal: 400;
       --weight-semibold: 600;
       --weight-bold: 700;
-      --leading-body: 1.6;
+      --leading-body: 1.5;
       --leading-heading: 1.2;
-      --leading-code: 1.5;
+      --leading-code: 1.45;
       --leading-small: 1.4;
-      --space-block: 1rem;
+      --space-block: 0.75rem;
       --space-page-x: 1.5rem;
-      --space-page-y: 3rem;
-      --space-heading: 2rem 0 0.75rem;
+      --space-page-y: 2rem;
+      --space-heading: 1.5rem 0 0.45rem;
       --space-inline-code: 0.1rem 0.35rem;
-      --space-code-block: 1rem 1.1rem;
-      --space-table-cell: 0.6rem 0.75rem;
+      --space-code-block: 0.75rem 0.9rem;
+      --space-table-cell: 0.42rem 0.6rem;
       --radius-code: 0.35rem;
       --radius-code-block: 6px;
-      --width-content: 64rem;
+      --width-content: 56rem;
       --width-toc: 12rem;
     }
 
     html[data-theme="dark"] {
       color-scheme: dark;
-      --color-bg: #0d1117;
-      --color-text: #e6edf3;
-      --color-muted: #8b949e;
-      --color-border: #30363d;
-      --color-code-bg: #161b22;
-      --color-control-bg: #161b22;
-      --color-control-text: #e6edf3;
-      --color-quote: #6e7681;
-      --color-link: #79c0ff;
-      --color-kbd-shadow: #30363d;
-      --color-alert-note: #2f81f7;
+      --color-bg: #0c0a09;
+      --color-text: #e7e5e4;
+      --color-muted: #a8a29e;
+      --color-border: #44403c;
+      --color-code-bg: #1c1917;
+      --color-control-bg: #1c1917;
+      --color-control-text: #e7e5e4;
+      --color-table-header-bg: #1c1917;
+      --color-quote: #57534e;
+      --color-link: #fdba74;
+      --color-kbd-shadow: #44403c;
+      --color-alert-note: #d6d3d1;
       --color-alert-tip: #3fb950;
-      --color-alert-important: #a371f7;
+      --color-alert-important: #c4b5fd;
       --color-alert-warning: #d29922;
       --color-alert-caution: #f85149;
       --color-syntax-text: #e6edf3;
@@ -110,19 +117,20 @@ var pageTmpl = template.Must(template.New("page").Parse(`<!doctype html>
     @media (prefers-color-scheme: dark) {
       html[data-theme="system"] {
         color-scheme: dark;
-        --color-bg: #0d1117;
-        --color-text: #e6edf3;
-        --color-muted: #8b949e;
-        --color-border: #30363d;
-        --color-code-bg: #161b22;
-        --color-control-bg: #161b22;
-        --color-control-text: #e6edf3;
-        --color-quote: #6e7681;
-        --color-link: #79c0ff;
-        --color-kbd-shadow: #30363d;
-        --color-alert-note: #2f81f7;
+        --color-bg: #0c0a09;
+        --color-text: #e7e5e4;
+        --color-muted: #a8a29e;
+        --color-border: #44403c;
+        --color-code-bg: #1c1917;
+        --color-control-bg: #1c1917;
+        --color-control-text: #e7e5e4;
+        --color-table-header-bg: #1c1917;
+        --color-quote: #57534e;
+        --color-link: #fdba74;
+        --color-kbd-shadow: #44403c;
+        --color-alert-note: #d6d3d1;
         --color-alert-tip: #3fb950;
-        --color-alert-important: #a371f7;
+        --color-alert-important: #c4b5fd;
         --color-alert-warning: #d29922;
         --color-alert-caution: #f85149;
         --color-syntax-text: #e6edf3;
@@ -150,6 +158,7 @@ var pageTmpl = template.Must(template.New("page").Parse(`<!doctype html>
       background: var(--color-bg);
       color: var(--color-text);
       font-family: var(--font-body);
+      font-size: var(--text-body);
       font-weight: var(--weight-normal);
       line-height: var(--leading-body);
     }
@@ -165,9 +174,9 @@ var pageTmpl = template.Must(template.New("page").Parse(`<!doctype html>
       border: 1px solid var(--color-border);
       border-radius: 0.375rem;
       font: inherit;
-      font-size: var(--text-sm);
+      font-size: var(--text-xs);
       line-height: var(--leading-small);
-      padding: 0.25rem 0.5rem;
+      padding: 0.2rem 0.45rem;
     }
 
     .toc {
@@ -194,8 +203,45 @@ var pageTmpl = template.Must(template.New("page").Parse(`<!doctype html>
       font-size: var(--text-h1);
     }
 
+    h2 {
+      font-size: var(--text-h2);
+    }
+
+    h3 {
+      font-size: var(--text-h3);
+    }
+
+    h4, h5, h6 {
+      font-size: 1rem;
+    }
+
     p, ul, ol, pre, blockquote, .table-scroll {
       margin: var(--space-block) 0;
+    }
+
+    ul, ol {
+      padding-left: 1.35rem;
+    }
+
+    li {
+      margin: 0.2rem 0;
+    }
+
+    li > p {
+      margin: 0.35rem 0;
+    }
+
+    li > ul, li > ol {
+      margin: 0.25rem 0;
+    }
+
+    li:has(input[type="checkbox"]) {
+      list-style: none;
+    }
+
+    li input[type="checkbox"] {
+      margin: 0 0.4rem 0 -1.1rem;
+      vertical-align: -0.1em;
     }
 
     a {
@@ -238,11 +284,11 @@ var pageTmpl = template.Must(template.New("page").Parse(`<!doctype html>
     .markdown-alert {
       border-left: 4px solid var(--color-alert-note);
       margin: var(--space-block) 0;
-      padding: 0.1rem var(--space-block);
+      padding: 0 var(--space-block);
     }
 
     .markdown-alert p {
-      margin: 0.75rem 0;
+      margin: 0.35rem 0;
     }
 
     .markdown-alert-title {
@@ -314,6 +360,11 @@ var pageTmpl = template.Must(template.New("page").Parse(`<!doctype html>
       vertical-align: top;
     }
 
+    th {
+      background: var(--color-table-header-bg);
+      font-weight: var(--weight-semibold);
+    }
+
     img {
       max-width: 100%;
       height: auto;
@@ -337,6 +388,10 @@ var pageTmpl = template.Must(template.New("page").Parse(`<!doctype html>
       background: var(--color-code-bg);
       margin: var(--space-block) 0;
       padding: var(--space-code-block);
+    }
+
+    pre code[class*="language-"] {
+      font-size: var(--text-code-block);
     }
 
     :not(pre) > code[class*="language-"] {
@@ -416,7 +471,7 @@ var pageTmpl = template.Must(template.New("page").Parse(`<!doctype html>
         max-height: calc(100vh - 6rem);
         overflow-y: auto;
         padding-right: var(--space-block);
-        font-size: var(--text-sm);
+        font-size: var(--text-xs);
         line-height: var(--leading-small);
       }
 
@@ -441,7 +496,7 @@ var pageTmpl = template.Must(template.New("page").Parse(`<!doctype html>
       }
     }
 
-    @media (max-width: 64rem) {
+    @media (max-width: 56rem) {
       .theme-select {
         display: none;
       }
