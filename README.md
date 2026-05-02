@@ -1,6 +1,8 @@
 # mdori
 
-A simple Markdown-to-HTML viewer with live reload and GitHub-flavored Markdown support. 
+A local Markdown previewer and HTML renderer.
+
+## Usage
 
 ```plaintext
 go install github.com/elh/mdori/cmd/mdori@latest
@@ -20,11 +22,20 @@ usage: mdori [-addr host:port] [-no-open] [-o output.html] [-preview] <markdown-
     	write a temporary standalone HTML file, open it, and exit
 ```
 
+## Features
+
+- Live browser preview with reload on save
+- GitHub-flavored Markdown, footnotes, tables, task lists, and alerts
+- Syntax highlighting with Prism
+- Math expressions with KaTeX
+- Mermaid diagrams with beautiful-mermaid
+- Standalone HTML export
+
 ## How it works
 
 By default, mdori runs a local HTTP server from the current working directory,
 opens the rendered Markdown page in the browser, watches the source file, and
-live reloads the page when the file changes. Press Ctrl-C to stop the server.
+live reloads the page when the file changes.
 
 This server-based mode is directory-aware: local `.md` links inside the current
 working directory are served through mdori and rendered as HTML, while relative
@@ -37,7 +48,9 @@ files. Relative `.md` links may open as raw Markdown or fail, root-relative
 links do not map to mdori's serving root, and relative images/assets only work
 when their paths are valid from the generated HTML file.
 
-<br>
+### Limitations
 
-Unsupported: GeoJSON/TopoJSON/STL diagrams, emoji shortcodes, and
-repository-specific autolinks.
+- Mermaid support uses beautiful-mermaid's subset, not full Mermaid.
+- GeoJSON/TopoJSON/STL diagrams are not supported.
+- Emoji shortcodes and repository-specific autolinks are not supported.
+- The live server is intended for local preview. Not hardened for untrusted inputs.
