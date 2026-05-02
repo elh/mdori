@@ -115,6 +115,33 @@ func TestRenderPageIncludesTableOfContents(t *testing.T) {
 	}
 }
 
+func TestRenderPageIncludesThemeSelector(t *testing.T) {
+	t.Parallel()
+
+	page, err := renderPage("doc", template.HTML(`<h1 id="doc">Doc</h1>`), nil)
+	if err != nil {
+		t.Fatalf("render page: %v", err)
+	}
+
+	html := string(page)
+	for _, expected := range []string{
+		`<select class="theme-select" aria-label="Color theme">`,
+		`<option value="system">System</option>`,
+		`<option value="light">Light</option>`,
+		`<option value="dark">Dark</option>`,
+		`localStorage.getItem("mdori-theme")`,
+		`localStorage.setItem("mdori-theme", theme)`,
+		`document.documentElement.dataset.theme = theme`,
+		`html[data-theme="dark"]`,
+		`@media (prefers-color-scheme: dark)`,
+		`html[data-theme="system"]`,
+	} {
+		if !strings.Contains(html, expected) {
+			t.Fatalf("expected %q in output, got %q", expected, html)
+		}
+	}
+}
+
 func TestRendererDoesNotAllowRawHTMLByDefault(t *testing.T) {
 	t.Parallel()
 

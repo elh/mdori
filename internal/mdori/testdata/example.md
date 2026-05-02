@@ -28,14 +28,11 @@ document](../../../README.md), or a [repository-root path](/README.md).
 Section links can point to [the tables section](#tables) and
 [the duplicate heading](#duplicate-heading).
 
-Image:<br>
-![Alt text for an image](https://upload.wikimedia.org/wikipedia/commons/thumb/f/f9/Markdown-mark-8th.svg/40px-Markdown-mark-8th.svg.png?utm_source=commons.wikimedia.org&utm_campaign=index&utm_content=thumbnail "Example image")
+Image (relative source):<br>
+![Alt text](./markdown.png "Example image")
 
 Image in link:<br>
-[![Linked image alt text](https://upload.wikimedia.org/wikipedia/commons/thumb/f/f9/Markdown-mark-8th.svg/40px-Markdown-mark-8th.svg.png?utm_source=commons.wikimedia.org&utm_campaign=index&utm_content=thumbnail)](https://www.wikimedia.org)
-
-Relative image:<br>
-![Relative image alt text](./markdown.png)
+[![Alt text](./markdown.png)](https://www.wikimedia.org)
 
 [reference link]: https://www.markdownguide.org/basic-syntax/#reference-style-links
 
@@ -310,13 +307,6 @@ Details content can include **Markdown formatting**.
 
 Image tag:<br>
 <img alt="img tag" src="markdown.png">
-
-Picture tag (with theme-aware source):
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="markdown_pink.png">
-  <img alt="Theme-aware example" src="markdown.png">
-</picture>
 
 HTML comments can hide content. Next line should not say "hidden".
 
