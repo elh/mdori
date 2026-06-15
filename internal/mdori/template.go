@@ -159,6 +159,7 @@ var pageTmpl = template.Must(template.New("page").Parse(`<!doctype html>
 
     html {
       scroll-padding-top: var(--space-block);
+      scrollbar-gutter: stable;
     }
 
     body {
@@ -229,7 +230,13 @@ var pageTmpl = template.Must(template.New("page").Parse(`<!doctype html>
 
     .mdori-math-display,
     .mdori-mermaid {
+      margin: var(--space-block) 0;
       overflow-x: auto;
+    }
+
+    .mdori-math-display > span,
+    .mdori-mermaid > pre {
+      margin: 0;
     }
 
     .mdori-mermaid svg {
@@ -291,12 +298,16 @@ var pageTmpl = template.Must(template.New("page").Parse(`<!doctype html>
     pre {
       background: var(--color-code-bg);
       border-radius: var(--radius-code-block);
+      line-height: var(--leading-code);
       padding: var(--space-code-block);
       overflow-x: auto;
     }
 
     pre code {
       background: transparent;
+      color: var(--color-syntax-text);
+      font-size: var(--text-code-block);
+      line-height: var(--leading-code);
       padding: 0;
     }
 
@@ -417,7 +428,7 @@ var pageTmpl = template.Must(template.New("page").Parse(`<!doctype html>
     }
 
     pre code[class*="language-"] {
-      font-size: var(--text-code-block);
+      line-height: var(--leading-code);
     }
 
     :not(pre) > code[class*="language-"] {
